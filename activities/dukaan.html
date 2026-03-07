@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>दुकान 🛒 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .shop-arena {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 12px 20px;
+  }
+
+  /* ===== Shopkeeper + Speech Bubble ===== */
+  .shopkeeper-section {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px 0 8px;
+  }
+  .shopkeeper-char {
+    font-size: clamp(3rem, 10vw, 4.5rem);
+    flex-shrink: 0;
+    line-height: 1;
+    transition: all 0.3s;
+    user-select: none;
+  }
+  .speech-bubble {
+    background: #fff;
+    border: 3px solid var(--yellow);
+    border-radius: 20px;
+    border-bottom-left-radius: 6px;
+    padding: 10px 14px;
+    font-size: clamp(0.95rem, 3vw, 1.3rem);
+    font-weight: 700;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    flex: 1;
+    position: relative;
+    min-height: 56px;
+  }
+  .speech-bubble::before {
+    content: '';
+    position: absolute;
+    left: -22px;
+    top: 16px;
+    border: 11px solid transparent;
+    border-right-color: var(--yellow);
+  }
+  .speech-bubble::after {
+    content: '';
+    position: absolute;
+    left: -15px;
+    top: 19px;
+    border: 8px solid transparent;
+    border-right-color: #fff;
+  }
+  .order-label {
+    font-size: 0.7rem;
+    color: #aaa;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+  }
+  .difficulty-chip {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    border-radius: 50px;
+    padding: 2px 10px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .chip-easy   { background: #E8F5E9; color: #2E7D32; }
+  .chip-medium { background: #FFF3E0; color: #E65100; }
+  .chip-hard   { background: #FCE4EC; color: #AD1457; }
+
+  /* ===== Hear button row ===== */
+  .hear-row {
+    display: flex;
+    justify-content: center;
+    padding: 2px 0 12px;
+  }
+
+  /* ===== Shelf grid ===== */
+  .shelf-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    padding: 0 0 14px;
+  }
+  @media (min-width: 500px) {
+    .shelf-grid { grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  }
+
+  .shelf-item {
+    background: #fff;
+    border-radius: 18px;
+    padding: 14px 6px 10px;
+    text-align: center;
+    cursor: pointer;
+    border: 4px solid #e0e0e0;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transition: transform 0.15s, border-color 0.25s, background 0.25s, box-shadow 0.15s;
+    position: relative;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .shelf-item:hover  { transform: scale(1.06); box-shadow: 0 6px 18px rgba(0,0,0,0.15); }
+  .shelf-item:active { transform: scale(0.92); }
+
+  .shelf-item.correct  { border-color: var(--green);  background: #E8F5E9; }
+  .shelf-item.too-many { border-color: var(--red);    background: #FFEBEE; animation: shake 0.5s; }
+  .shelf-item.too-few  { border-color: var(--yellow); background: #FFFDE7; }
+  .shelf-item.overflow { animation: shake 0.5s; }
+  .shelf-item.tap-pop  { animation: tapPop 0.28s ease; }
+
+  @keyframes tapPop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.22); }
+    100% { transform: scale(1); }
+  }
+
+  .shelf-emoji {
+    font-size: clamp(1.8rem, 7vw, 2.6rem);
+    line-height: 1.2;
+  }
+  .shelf-label {
+    font-size: clamp(0.7rem, 2.2vw, 0.9rem);
+    font-weight: 800;
+    color: #444;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+  .shelf-label small {
+    display: block;
+    font-size: 0.65em;
+    color: #999;
+    font-weight: 600;
+  }
+
+  /* Badge showing basket count */
+  .shelf-badge {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    background: var(--orange);
+    color: #fff;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 900;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    border: 2px solid #fff;
+    z-index: 2;
+  }
+  .shelf-badge.show { display: flex; }
+  .shelf-badge.bump { animation: badgeBump 0.22s ease; }
+  @keyframes badgeBump {
+    50% { transform: scale(1.6); }
+  }
+
+  /* ===== Action buttons ===== */
+  .action-row {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    padding: 6px 0 4px;
+    flex-wrap: wrap;
+  }
+  .check-btn {
+    background: linear-gradient(135deg, #4CAF50, #2E7D32);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 28px;
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(76,175,80,0.45);
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: var(--font);
+  }
+  .check-btn:hover  { transform: scale(1.06); box-shadow: 0 6px 20px rgba(76,175,80,0.55); }
+  .check-btn:active { transform: scale(0.95); }
+
+  .clear-btn {
+    background: linear-gradient(135deg, #78909C, #455A64);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 24px;
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    transition: transform 0.15s, box-shadow 0.15s;
+    font-family: var(--font);
+  }
+  .clear-btn:hover  { transform: scale(1.06); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+  .clear-btn:active { transform: scale(0.95); }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🛒 दुकान · Shop</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/10</span>
+</header>
+
+<div id="game-area">
+  <div class="shop-arena">
+
+    <!-- Shopkeeper + order bubble -->
+    <div class="shopkeeper-section">
+      <div class="shopkeeper-char" id="shopkeeper-emoji">👨‍🍳</div>
+      <div class="speech-bubble">
+        <div class="order-label">ऑर्डर · Order</div>
+        <div id="order-text">…</div>
+      </div>
+    </div>
+
+    <!-- Hear order button -->
+    <div class="hear-row">
+      <button class="hear-btn" onclick="hearOrder()" aria-label="ऑर्डर सुनो · Hear order">🔊</button>
+    </div>
+
+    <!-- Shelf -->
+    <div class="shelf-grid" id="shelf-grid"></div>
+
+    <!-- Action buttons -->
+    <div class="action-row">
+      <button class="check-btn" onclick="checkOrder()">✅ जाँचो · Check</button>
+      <button class="clear-btn" onclick="clearBasket()">🗑️ साफ़ · Clear</button>
+    </div>
+
+    <div id="feedback-banner" class="feedback-banner"></div>
+  </div>
+</div>
+
+<!-- Completion Screen -->
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars">⭐⭐⭐</div>
+  <div class="completion-title" id="completion-title">शानदार!</div>
+  <div class="completion-score" id="completion-score"></div>
+  <div class="completion-best"  id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 फिर खेलो · Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const ITEMS = [
+  {id: 'mango',   emoji: '🥭', hi: 'आम',     en: 'Mango'},
+  {id: 'banana',  emoji: '🍌', hi: 'केला',    en: 'Banana'},
+  {id: 'coconut', emoji: '🥥', hi: 'नारियल', en: 'Coconut'},
+  {id: 'apple',   emoji: '🍎', hi: 'सेब',     en: 'Apple'},
+  {id: 'grapes',  emoji: '🍇', hi: 'अंगूर',   en: 'Grapes'},
+  {id: 'orange',  emoji: '🍊', hi: 'संतरा',   en: 'Orange'},
+];
+
+const ROUNDS = [
+  {mango: 2},
+  {banana: 3},
+  {apple: 2},
+  {mango: 3, banana: 1},
+  {coconut: 2, apple: 2},
+  {mango: 2, orange: 3},
+  {banana: 2, grapes: 2},
+  {mango: 2, banana: 1, apple: 3},
+  {coconut: 1, mango: 3, orange: 2},
+  {mango: 2, banana: 3, grapes: 1},
+];
+
+const HINDI_NUMS = ['शून्य','एक','दो','तीन','चार','पाँच','छह','सात','आठ','नौ','दस'];
+const TOTAL_ROUNDS = 10;
+const MAX_PER_ITEM = 5;
+
+let round       = 0;
+let wrongChecks = 0;
+let basket      = {};
+let currentOrder = {};
+let checking    = false;
+let feedbackTimer = null;
+
+function initGame() {
+  round       = 0;
+  wrongChecks = 0;
+  basket      = {};
+  checking    = false;
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  nextRound();
+}
+
+function nextRound() {
+  if (round >= TOTAL_ROUNDS) {
+    showCompletion('dukaan', wrongChecks, TOTAL_ROUNDS);
+    return;
+  }
+  basket       = {};
+  checking     = false;
+  currentOrder = ROUNDS[round];
+  hideFeedback();
+  updateProgress(round, TOTAL_ROUNDS);
+  document.getElementById('shopkeeper-emoji').textContent = '👨‍🍳';
+  renderOrderBubble();
+  renderShelf();
+  hearOrder();
+}
+
+/* ===== Order text helpers ===== */
+function difficultyChip(r) {
+  if (r < 3) return '<span class="difficulty-chip chip-easy">आसान · Easy</span>';
+  if (r < 7) return '<span class="difficulty-chip chip-medium">मध्यम · Medium</span>';
+  return '<span class="difficulty-chip chip-hard">मुश्किल · Hard</span>';
+}
+
+function buildOrderParts(order, withEmoji) {
+  return Object.entries(order).map(([id, count]) => {
+    const item = ITEMS.find(i => i.id === id);
+    return withEmoji
+      ? `${HINDI_NUMS[count]} ${item.emoji} ${item.hi}`
+      : `${HINDI_NUMS[count]} ${item.hi}`;
+  });
+}
+
+function joinParts(parts) {
+  if (parts.length === 1) return `मुझे ${parts[0]} दो`;
+  if (parts.length === 2) return `मुझे ${parts[0]} और ${parts[1]} दो`;
+  return `मुझे ${parts.slice(0, -1).join(', ')} और ${parts[parts.length - 1]} दो`;
+}
+
+function renderOrderBubble() {
+  const display = joinParts(buildOrderParts(currentOrder, true));
+  document.getElementById('order-text').innerHTML = display + difficultyChip(round);
+}
+
+function hearOrder() {
+  speakHindi(joinParts(buildOrderParts(currentOrder, false)));
+}
+
+/* ===== Shelf rendering ===== */
+function renderShelf() {
+  const grid = document.getElementById('shelf-grid');
+  grid.innerHTML = '';
+  ITEMS.forEach(item => {
+    const count = basket[item.id] || 0;
+    const div = document.createElement('div');
+    div.className = 'shelf-item';
+    div.id        = 'shelf-' + item.id;
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', `${item.hi} ${item.en}`);
+    div.onclick = () => tapItem(item.id);
+    div.innerHTML = `
+      <div class="shelf-emoji">${item.emoji}</div>
+      <div class="shelf-label">${item.hi}<small>${item.en}</small></div>
+      <div class="shelf-badge${count > 0 ? ' show' : ''}" id="badge-${item.id}">${count}</div>
+    `;
+    grid.appendChild(div);
+  });
+}
+
+/* ===== Basket interaction ===== */
+function tapItem(itemId) {
+  if (checking) return;
+
+  const target  = currentOrder[itemId] || 0;
+  const current = basket[itemId] || 0;
+
+  if (current >= MAX_PER_ITEM) {
+    animateShelfItem(itemId, 'overflow');
+    return;
+  }
+
+  basket[itemId] = current + 1;
+
+  // Update badge
+  const badge = document.getElementById('badge-' + itemId);
+  if (badge) {
+    badge.textContent = basket[itemId];
+    badge.classList.add('show');
+    badge.classList.remove('bump');
+    void badge.offsetWidth;
+    badge.classList.add('bump');
+  }
+
+  // Animate shelf item
+  if (basket[itemId] > target) {
+    animateShelfItem(itemId, 'overflow');
+    if (target > 0) {
+      showMiniFeedback('⚠️ बहुत ज़्यादा! Too many!', false);
+    } else {
+      showMiniFeedback('⚠️ यह नहीं चाहिए! Not needed!', false);
+    }
+  } else {
+    animateShelfItem(itemId, 'tap-pop');
+  }
+}
+
+function animateShelfItem(itemId, cls) {
+  const el = document.getElementById('shelf-' + itemId);
+  if (!el) return;
+  el.classList.remove('tap-pop', 'overflow');
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
+function clearBasket() {
+  basket   = {};
+  checking = false;
+  ITEMS.forEach(item => {
+    const s = document.getElementById('shelf-' + item.id);
+    if (s) s.classList.remove('correct', 'too-many', 'too-few');
+    const b = document.getElementById('badge-' + item.id);
+    if (b) { b.textContent = '0'; b.classList.remove('show'); }
+  });
+  hideFeedback();
+  speakHindi('साफ़ किया!');
+}
+
+/* ===== Check order ===== */
+function checkOrder() {
+  if (checking) return;
+
+  let allCorrect = true;
+
+  ITEMS.forEach(item => {
+    const el     = document.getElementById('shelf-' + item.id);
+    if (!el) return;
+    el.classList.remove('correct', 'too-many', 'too-few');
+    const got    = basket[item.id] || 0;
+    const target = currentOrder[item.id] || 0;
+
+    if (got === 0 && target === 0) {
+      // not requested, not added — neutral
+    } else if (got === target) {
+      el.classList.add('correct');
+    } else if (got > target) {
+      el.classList.add('too-many');
+      allCorrect = false;
+    } else {
+      el.classList.add('too-few');
+      allCorrect = false;
+    }
+  });
+
+  if (allCorrect) {
+    checking = true;
+    document.getElementById('shopkeeper-emoji').textContent = '😊';
+    showMiniFeedback('🎉 धन्यवाद! Thank you!', true);
+    speakHindi('धन्यवाद! शाबाश!');
+    launchConfetti();
+    round++;
+    updateProgress(round, TOTAL_ROUNDS);
+    setTimeout(() => {
+      ITEMS.forEach(item => {
+        const s = document.getElementById('shelf-' + item.id);
+        if (s) s.classList.remove('correct', 'too-many', 'too-few');
+      });
+      nextRound();
+    }, 1800);
+  } else {
+    wrongChecks++;
+    speakHindi('फिर से गिनो!');
+    showMiniFeedback('❌ फिर से गिनो! Count again!', false);
+  }
+}
+
+/* ===== Mini feedback (transient) ===== */
+function showMiniFeedback(msg, correct) {
+  const banner = document.getElementById('feedback-banner');
+  if (!banner) return;
+  banner.textContent = msg;
+  banner.className   = 'feedback-banner show ' + (correct ? 'correct-fb' : 'wrong-fb');
+  clearTimeout(feedbackTimer);
+  feedbackTimer = setTimeout(() => hideFeedback(), 1500);
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>

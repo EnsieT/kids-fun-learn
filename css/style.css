@@ -119,6 +119,8 @@ p  { font-size: clamp(1rem, 2.5vw, 1.3rem); }
 .card-sorting       { border-color: var(--orange); background: #FFF3E0; }
 .card-jigsaw        { border-color: var(--purple); background: #F3E5F5; }
 .card-number-line   { border-color: var(--green);  background: #E8F5E9; }
+.card-dukaan        { border-color: #FF8C00;       background: #FFF8E1; }
+.card-drawing       { border-color: #E91E63;       background: #FCE4EC; }
 
 /* ===== Hear / Speak Button ===== */
 .hear-btn {

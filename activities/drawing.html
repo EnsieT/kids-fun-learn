@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Drawing 🎨 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  /* Full-screen flex layout */
+  body {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Canvas wrapper fills remaining vertical space */
+  #canvas-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #fff;
+    touch-action: none;
+    min-height: 0; /* required for flex children with overflow */
+  }
+
+  #draw-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+    cursor: crosshair;
+  }
+  #draw-canvas.eraser-cursor  { cursor: cell; }
+  #draw-canvas.sticker-cursor { cursor: none; }
+
+  /* Floating sticker preview that follows the pointer */
+  #sticker-preview {
+    position: absolute;
+    font-size: 2.8rem;
+    line-height: 1;
+    pointer-events: none;
+    display: none;
+    z-index: 10;
+    transform: translate(-50%, -50%);
+    user-select: none;
+  }
+
+  /* ===== Sticker panel ===== */
+  #sticker-panel {
+    background: #fff;
+    border-top: 2px solid #e8e8e8;
+    padding: 8px 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  #sticker-panel.hidden { display: none; }
+
+  .sticker-opt {
+    font-size: 2rem;
+    background: none;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    cursor: pointer;
+    padding: 4px 6px;
+    line-height: 1;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    font-family: var(--font);
+  }
+  .sticker-opt:hover  { transform: scale(1.25); }
+  .sticker-opt:active { transform: scale(0.88); }
+  .sticker-opt.selected {
+    border-color: var(--blue);
+    background: #E3F2FD;
+  }
+
+  /* ===== Drawing toolbar ===== */
+  .draw-toolbar {
+    background: #fff;
+    border-top: 3px solid #e0e0e0;
+    padding: 8px 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Color circles — 46 px to meet touch-target guidelines */
+  .color-btn {
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.22);
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .color-btn:hover  { transform: scale(1.18); }
+  .color-btn:active { transform: scale(0.9); }
+  .color-btn.active {
+    border-color: #333;
+    transform: scale(1.22);
+    box-shadow: 0 0 0 2px #fff, 0 0 0 5px #333;
+  }
+  /* White swatch needs a visible border */
+  .color-btn[data-color="#FFFFFF"]        { border-color: #bbb; }
+  .color-btn[data-color="#FFFFFF"].active { border-color: #333; }
+
+  /* Vertical divider in toolbar */
+  .tool-sep {
+    width: 2px;
+    height: 34px;
+    background: #e0e0e0;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* Brush-size buttons */
+  .size-btn {
+    background: none;
+    border: 3px solid transparent;
+    border-radius: 50%;
+    width: 46px;
+    height: 46px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .size-btn:hover  { transform: scale(1.15); }
+  .size-btn:active { transform: scale(0.92); }
+  .size-btn.active { border-color: #333; background: #f0f0f0; }
+
+  .size-dot {
+    background: #333;
+    border-radius: 50%;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  /* Tool buttons (eraser, clear, sticker, undo, save) */
+  .tool-btn {
+    width: 46px;
+    height: 46px;
+    border: 3px solid transparent;
+    border-radius: 14px;
+    background: #f5f5f5;
+    font-size: 1.5rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, background 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    padding: 0;
+    font-family: var(--font);
+  }
+  .tool-btn:hover  { transform: scale(1.12); background: #e8e8e8; }
+  .tool-btn:active { transform: scale(0.91); }
+  .tool-btn.active { border-color: var(--blue); background: #E3F2FD; }
+
+  /* Compact on small screens */
+  @media (max-width: 420px) {
+    .color-btn, .size-btn, .tool-btn { width: 38px; height: 38px; }
+    .tool-btn  { font-size: 1.25rem; }
+    .draw-toolbar { gap: 6px; padding: 6px 8px; }
+    .tool-sep  { height: 28px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🎨 बनाओ · Draw!</h1>
+</header>
+
+<!-- Drawing canvas -->
+<div id="canvas-wrap">
+  <canvas id="draw-canvas"></canvas>
+  <div id="sticker-preview" aria-hidden="true"></div>
+</div>
+
+<!-- Sticker panel (revealed when sticker mode is active) -->
+<div id="sticker-panel" class="hidden" role="toolbar" aria-label="Stickers"></div>
+
+<!-- Drawing toolbar -->
+<div class="draw-toolbar" role="toolbar" aria-label="Drawing tools">
+
+  <!-- 9 colour swatches -->
+  <button class="color-btn active" data-color="#F44336" style="background:#F44336" aria-label="Red"    onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#FF9800" style="background:#FF9800" aria-label="Orange" onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#FFD700" style="background:#FFD700" aria-label="Yellow" onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#4CAF50" style="background:#4CAF50" aria-label="Green"  onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#2196F3" style="background:#2196F3" aria-label="Blue"   onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#9C27B0" style="background:#9C27B0" aria-label="Purple" onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#212121" style="background:#212121" aria-label="Black"  onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#FFFFFF" style="background:#FFFFFF" aria-label="White"  onclick="setColor(this)"></button>
+  <button class="color-btn"        data-color="#795548" style="background:#795548" aria-label="Brown"  onclick="setColor(this)"></button>
+
+  <div class="tool-sep"></div>
+
+  <!-- 3 brush sizes (shown as dots) -->
+  <button class="size-btn"        data-size="4"  aria-label="Small brush"  onclick="setSize(this)">
+    <span class="size-dot" style="width:6px;height:6px"></span>
+  </button>
+  <button class="size-btn active" data-size="14" aria-label="Medium brush" onclick="setSize(this)">
+    <span class="size-dot" style="width:14px;height:14px"></span>
+  </button>
+  <button class="size-btn"        data-size="32" aria-label="Large brush"  onclick="setSize(this)">
+    <span class="size-dot" style="width:26px;height:26px"></span>
+  </button>
+
+  <div class="tool-sep"></div>
+
+  <!-- Tool actions -->
+  <button class="tool-btn" id="eraser-btn"  onclick="toggleEraser()"      aria-label="Eraser"  title="Eraser">🧹</button>
+  <button class="tool-btn"                  onclick="clearCanvas()"        aria-label="Clear"   title="Clear all">🗑️</button>
+  <button class="tool-btn" id="sticker-btn" onclick="toggleStickerMode()"  aria-label="Stickers" title="Stickers">🎨</button>
+  <button class="tool-btn"                  onclick="undoAction()"         aria-label="Undo"    title="Undo">↩️</button>
+  <button class="tool-btn"                  onclick="saveDrawing()"        aria-label="Save"    title="Save drawing">💾</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const STICKERS = [
+  {emoji: '🥭', hi: 'आम'},
+  {emoji: '🪔', hi: 'दिया'},
+  {emoji: '🦚', hi: 'मोर'},
+  {emoji: '🐘', hi: 'हाथी'},
+  {emoji: '🌺', hi: 'फूल'},
+  {emoji: '🏏', hi: 'क्रिकेट'},
+  {emoji: '🇮🇳', hi: 'तिरंगा'},
+  {emoji: '⭐',  hi: 'तारा'},
+  {emoji: '🌟', hi: 'चमकता तारा'},
+  {emoji: '💖', hi: 'दिल'},
+  {emoji: '🦋', hi: 'तितली'},
+  {emoji: '🌈', hi: 'इंद्रधनुष'},
+];
+
+const canvas = document.getElementById('draw-canvas');
+const ctx    = canvas.getContext('2d');
+const wrap   = document.getElementById('canvas-wrap');
+
+let currentColor    = '#F44336';
+let brushSize       = 14;
+let isEraser        = false;
+let stickerMode     = false;
+let selectedSticker = null;
+let isDrawing       = false;
+let lastX = 0, lastY = 0;
+
+const undoStack = [];
+const MAX_UNDO  = 20;
+
+/* ===== Canvas sizing ===== */
+function resizeCanvas() {
+  const w = wrap.clientWidth;
+  const h = wrap.clientHeight;
+  if (!w || !h) return;
+
+  // Preserve existing drawing across resize
+  const tmp = document.createElement('canvas');
+  tmp.width  = canvas.width  || w;
+  tmp.height = canvas.height || h;
+  tmp.getContext('2d').drawImage(canvas, 0, 0);
+
+  canvas.width  = w;
+  canvas.height = h;
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, w, h);
+  if (tmp.width > 0 && tmp.height > 0) ctx.drawImage(tmp, 0, 0);
+
+  ctx.lineCap  = 'round';
+  ctx.lineJoin = 'round';
+}
+
+/* ===== Undo ===== */
+function saveUndo() {
+  if (undoStack.length >= MAX_UNDO) undoStack.shift();
+  undoStack.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+}
+
+function undoAction() {
+  if (undoStack.length === 0) return;
+  ctx.putImageData(undoStack.pop(), 0, 0);
+}
+
+/* ===== Pointer → canvas coordinates ===== */
+function getPos(e) {
+  const rect  = canvas.getBoundingClientRect();
+  const scaleX = canvas.width  / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return [
+    (e.clientX - rect.left) * scaleX,
+    (e.clientY - rect.top)  * scaleY,
+  ];
+}
+
+/* ===== Drawing events ===== */
+canvas.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (stickerMode && selectedSticker) { placeSticker(e); return; }
+
+  saveUndo();
+  isDrawing = true;
+  [lastX, lastY] = getPos(e);
+
+  // Paint a dot so single taps leave a mark
+  ctx.beginPath();
+  const r = (isEraser ? brushSize * 2 : brushSize) / 2;
+  ctx.arc(lastX, lastY, r, 0, Math.PI * 2);
+  ctx.fillStyle = isEraser ? '#fff' : currentColor;
+  ctx.fill();
+}, { passive: false });
+
+canvas.addEventListener('pointermove', e => {
+  e.preventDefault();
+  if (stickerMode && selectedSticker) { updateStickerPreview(e); return; }
+  if (!isDrawing) return;
+
+  const [x, y] = getPos(e);
+  ctx.beginPath();
+  ctx.moveTo(lastX, lastY);
+  ctx.lineTo(x, y);
+  ctx.strokeStyle = isEraser ? '#fff' : currentColor;
+  ctx.lineWidth   = isEraser ? brushSize * 2 : brushSize;
+  ctx.lineCap     = 'round';
+  ctx.lineJoin    = 'round';
+  ctx.stroke();
+  [lastX, lastY] = [x, y];
+}, { passive: false });
+
+canvas.addEventListener('pointerup',     () => { isDrawing = false; });
+canvas.addEventListener('pointerleave',  () => { isDrawing = false; });
+canvas.addEventListener('pointercancel', () => { isDrawing = false; });
+
+/* ===== Sticker placement ===== */
+function placeSticker(e) {
+  const [x, y] = getPos(e);
+  saveUndo();
+  ctx.font         = '48px serif';
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(selectedSticker, x, y);
+}
+
+function updateStickerPreview(e) {
+  const preview = document.getElementById('sticker-preview');
+  const rect    = wrap.getBoundingClientRect();
+  preview.style.left    = (e.clientX - rect.left) + 'px';
+  preview.style.top     = (e.clientY - rect.top)  + 'px';
+  preview.style.display = 'block';
+}
+
+function hideStickerPreview() {
+  document.getElementById('sticker-preview').style.display = 'none';
+}
+
+wrap.addEventListener('pointerleave', () => {
+  if (stickerMode) hideStickerPreview();
+});
+
+/* ===== Toolbar: colour ===== */
+function setColor(btn) {
+  currentColor = btn.dataset.color;
+  isEraser     = false;
+  document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('eraser-btn').classList.remove('active');
+  canvas.classList.remove('eraser-cursor');
+  if (stickerMode) toggleStickerMode();
+}
+
+/* ===== Toolbar: brush size ===== */
+function setSize(btn) {
+  brushSize = parseInt(btn.dataset.size, 10);
+  document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ===== Toolbar: eraser ===== */
+function toggleEraser() {
+  isEraser = !isEraser;
+  const btn = document.getElementById('eraser-btn');
+  btn.classList.toggle('active', isEraser);
+  canvas.classList.toggle('eraser-cursor', isEraser);
+  if (stickerMode) toggleStickerMode();
+}
+
+/* ===== Toolbar: clear ===== */
+function clearCanvas() {
+  saveUndo();
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+/* ===== Toolbar: sticker mode ===== */
+function toggleStickerMode() {
+  stickerMode = !stickerMode;
+  document.getElementById('sticker-btn').classList.toggle('active', stickerMode);
+  document.getElementById('sticker-panel').classList.toggle('hidden', !stickerMode);
+  if (!stickerMode) {
+    selectedSticker = null;
+    canvas.classList.remove('sticker-cursor');
+    hideStickerPreview();
+    document.querySelectorAll('.sticker-opt').forEach(b => b.classList.remove('selected'));
+  }
+}
+
+function selectSticker(btn, emoji, hi) {
+  selectedSticker = emoji;
+  canvas.classList.add('sticker-cursor');
+  document.getElementById('sticker-preview').textContent = emoji;
+  document.querySelectorAll('.sticker-opt').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  speakHindi(hi);
+}
+
+/* ===== Toolbar: save ===== */
+function saveDrawing() {
+  const link    = document.createElement('a');
+  link.download = `meri-drawing-${new Date().toISOString().slice(0, 10)}.png`;
+  link.href     = canvas.toDataURL('image/png');
+  link.click();
+}
+
+/* ===== Sticker panel render ===== */
+function renderStickerPanel() {
+  const panel = document.getElementById('sticker-panel');
+  STICKERS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className   = 'sticker-opt';
+    btn.textContent = s.emoji;
+    btn.setAttribute('aria-label', s.hi);
+    btn.onclick = () => selectSticker(btn, s.emoji, s.hi);
+    panel.appendChild(btn);
+  });
+}
+
+/* ===== Init ===== */
+document.addEventListener('DOMContentLoaded', () => {
+  renderStickerPanel();
+  // Use rAF so the browser has laid out all flex items before we read dimensions
+  requestAnimationFrame(() => {
+    resizeCanvas();
+    speakHindi('कुछ भी बनाओ!');
+  });
+});
+
+window.addEventListener('resize', resizeCanvas);
+</script>
+</body>
+</html>
