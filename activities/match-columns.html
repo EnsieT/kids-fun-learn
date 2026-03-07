@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Match Columns 🔗 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .match-wrap {
+    padding: 12px 16px;
+    max-width: 680px;
+    margin: 0 auto;
+    position: relative;
+  }
+  .match-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    position: relative;
+  }
+  .match-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .match-col-label {
+    text-align: center;
+    font-weight: 900;
+    font-size: 1rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 4px;
+  }
+  .match-item {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.1);
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    border: 4px solid transparent;
+    transition: transform 0.15s, border-color 0.2s, background 0.2s;
+    font-size: 2rem;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    user-select: none;
+  }
+  .match-item:hover { transform: scale(1.06); }
+  .match-item:active { transform: scale(0.95); }
+  .match-item.selected  { border-color: #2196F3; background: #E3F2FD; }
+  .match-item.matched   { border-color: #4CAF50; background: #E8F5E9; opacity: 0.75; cursor: default; transform: none; }
+  .match-item.wrong     { border-color: #F44336; background: #FFEBEE; animation: shake 0.5s; }
+  .match-item-label { font-size: 0.75rem; font-weight: 800; color: #555; }
+
+  /* SVG connector overlay */
+  #connector-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 5;
+    overflow: visible;
+  }
+
+  .round-type-badge {
+    text-align: center;
+    padding: 6px 16px;
+    background: linear-gradient(135deg, #FF8C00, #FFD700);
+    color: #fff;
+    font-weight: 900;
+    font-size: 1rem;
+    border-radius: 50px;
+    display: inline-block;
+    margin: 8px auto;
+    display: flex;
+    justify-content: center;
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🔗 Match Columns</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/8</span>
+</header>
+
+<div id="game-area">
+  <div class="question-area">
+    <p class="question-text" id="question-text">मिलाओ! Match them!</p>
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+  </div>
+
+  <div style="display:flex;justify-content:center;">
+    <div class="round-type-badge" id="round-badge">🐄 जानवर और आवाज़</div>
+  </div>
+
+  <div id="feedback-banner" class="feedback-banner"></div>
+
+  <div class="match-wrap">
+    <div class="match-columns" id="match-columns">
+      <svg id="connector-svg"></svg>
+      <div class="match-col" id="left-col">
+        <div class="match-col-label">👈 इन्हें</div>
+      </div>
+      <div class="match-col" id="right-col">
+        <div class="match-col-label">👉 इनसे मिलाओ</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title" id="completion-title"></div>
+  <div class="completion-score" id="completion-score"></div>
+  <div class="completion-best"  id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const ROUND_TYPES = [
+  {
+    titleHi: '🐄 जानवर और आवाज़',
+    titleEn: 'Animals & Sounds',
+    pairs: [
+      {left:{emoji:'🐄',hi:'गाय',en:'Cow'},     right:{emoji:'🐮',hi:'मू',en:'Moo'}},
+      {left:{emoji:'🐕',hi:'कुत्ता',en:'Dog'},  right:{emoji:'🔔',hi:'भौं भौं',en:'Woof'}},
+      {left:{emoji:'🐈',hi:'बिल्ली',en:'Cat'},  right:{emoji:'🎵',hi:'म्याऊं',en:'Meow'}},
+      {left:{emoji:'🦁',hi:'शेर',en:'Lion'},     right:{emoji:'💥',hi:'दहाड़',en:'Roar'}},
+      {left:{emoji:'🐘',hi:'हाथी',en:'Elephant'},right:{emoji:'📢',hi:'चिंघाड़',en:'Trumpet'}},
+    ]
+  },
+  {
+    titleHi: '🥭 फल और रंग',
+    titleEn: 'Fruits & Colors',
+    pairs: [
+      {left:{emoji:'🥭',hi:'आम',en:'Mango'},       right:{emoji:'🟡',hi:'पीला',en:'Yellow'}},
+      {left:{emoji:'🍎',hi:'सेब',en:'Apple'},       right:{emoji:'🔴',hi:'लाल',en:'Red'}},
+      {left:{emoji:'🍌',hi:'केला',en:'Banana'},      right:{emoji:'🟡',hi:'पीला',en:'Yellow'}},
+      {left:{emoji:'🍊',hi:'संतरा',en:'Orange'},    right:{emoji:'🟠',hi:'नारंगी',en:'Orange'}},
+      {left:{emoji:'🍇',hi:'अंगूर',en:'Grapes'},    right:{emoji:'🟣',hi:'बैंगनी',en:'Purple'}},
+    ]
+  },
+  {
+    titleHi: '🔢 संख्या और बिंदु',
+    titleEn: 'Numbers & Dots',
+    pairs: [
+      {left:{emoji:'1️⃣',hi:'एक',en:'One'},   right:{emoji:'⚫',hi:'एक बिंदु',en:'1 dot'}},
+      {left:{emoji:'2️⃣',hi:'दो',en:'Two'},   right:{emoji:'⚫⚫',hi:'दो बिंदु',en:'2 dots'}},
+      {left:{emoji:'3️⃣',hi:'तीन',en:'Three'},right:{emoji:'⚫⚫⚫',hi:'तीन बिंदु',en:'3 dots'}},
+      {left:{emoji:'4️⃣',hi:'चार',en:'Four'}, right:{emoji:'⚫⚫⚫⚫',hi:'चार बिंदु',en:'4 dots'}},
+      {left:{emoji:'5️⃣',hi:'पाँच',en:'Five'},right:{emoji:'⚫⚫⚫⚫⚫',hi:'पाँच बिंदु',en:'5 dots'}},
+    ]
+  },
+  {
+    titleHi: '🌍 चीज़ें और श्रेणी',
+    titleEn: 'Things & Categories',
+    pairs: [
+      {left:{emoji:'🥭',hi:'आम',en:'Mango'},   right:{emoji:'🍽️',hi:'फल',en:'Fruit'}},
+      {left:{emoji:'🥔',hi:'आलू',en:'Potato'}, right:{emoji:'🥗',hi:'सब्ज़ी',en:'Veggie'}},
+      {left:{emoji:'🐄',hi:'गाय',en:'Cow'},     right:{emoji:'🐾',hi:'जानवर',en:'Animal'}},
+      {left:{emoji:'🚗',hi:'कार',en:'Car'},     right:{emoji:'🛣️',hi:'वाहन',en:'Vehicle'}},
+      {left:{emoji:'📚',hi:'किताब',en:'Book'},  right:{emoji:'✏️',hi:'पढ़ाई',en:'Study'}},
+    ]
+  },
+];
+
+const TOTAL_ROUNDS = 8;
+let round = 0, mistakes = 0;
+let roundsQueue = [];
+let selectedLeft = null;
+let matchedPairs = 0;
+let totalPairs = 0;
+let currentPairs = [];
+let currentPrompt = 'मिलाओ!';
+const PROMPT_SELECT_LEFT = 'पहले बाईं तरफ से चुनो!';
+
+function hearAgain() { speakHindi(currentPrompt); }
+
+function initGame() {
+  round = 0; mistakes = 0; selectedLeft = null;
+  // Build a queue of 8 rounds by cycling through round types
+  roundsQueue = [];
+  const types = shuffle([...ROUND_TYPES]);
+  for (let i = 0; i < TOTAL_ROUNDS; i++) {
+    roundsQueue.push(types[i % types.length]);
+  }
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  nextRound();
+}
+
+function nextRound() {
+  if (round >= TOTAL_ROUNDS) {
+    showCompletion('match-columns', mistakes, TOTAL_ROUNDS);
+    return;
+  }
+  selectedLeft = null;
+  matchedPairs = 0;
+  hideFeedback();
+  updateProgress(round, TOTAL_ROUNDS);
+
+  const rt = roundsQueue[round];
+  document.getElementById('round-badge').textContent = rt.titleHi;
+  currentPrompt = rt.titleHi.replace(/^[^\s]+ /, '') + '! मिलाओ!';
+
+  // Pick 4 pairs from this round type
+  currentPairs = shuffle([...rt.pairs]).slice(0, 4);
+  totalPairs = currentPairs.length;
+
+  const leftItems  = currentPairs.map(p => p.left);
+  const rightItems = shuffle(currentPairs.map(p => p.right));
+
+  // Clear SVG connectors
+  document.getElementById('connector-svg').innerHTML = '';
+
+  renderColumn('left-col',  leftItems,  true);
+  renderColumn('right-col', rightItems, false);
+
+  speakHindi(currentPrompt);
+}
+
+function renderColumn(colId, items, isLeft) {
+  const col = document.getElementById(colId);
+  // Keep label, remove item cards
+  const label = col.querySelector('.match-col-label');
+  col.innerHTML = '';
+  col.appendChild(label);
+
+  items.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'match-item';
+    div.dataset.emoji = item.emoji;
+    div.dataset.hi    = item.hi;
+    div.innerHTML = `<span>${item.emoji}</span><span class="match-item-label">${item.hi}</span>`;
+    div.onclick = () => isLeft ? handleLeftTap(div) : handleRightTap(div);
+    col.appendChild(div);
+  });
+}
+
+function handleLeftTap(el) {
+  if (el.classList.contains('matched')) return;
+  // Deselect previous
+  document.querySelectorAll('#left-col .match-item.selected')
+    .forEach(e => e.classList.remove('selected'));
+  selectedLeft = el;
+  el.classList.add('selected');
+  speakHindi(el.dataset.hi);
+  hideFeedback();
+}
+
+function handleRightTap(el) {
+  if (!selectedLeft) {
+    speakHindi(PROMPT_SELECT_LEFT);
+    return;
+  }
+  if (el.classList.contains('matched')) return;
+
+  // Find the correct right for the selected left
+  const leftEmoji = selectedLeft.dataset.emoji;
+  const pair = currentPairs.find(p => p.left.emoji === leftEmoji);
+  const correctHi = pair ? pair.right.hi : null;
+
+  if (el.dataset.hi === correctHi) {
+    // Correct!
+    el.classList.add('matched');
+    selectedLeft.classList.remove('selected');
+    selectedLeft.classList.add('matched');
+    drawConnector(selectedLeft, el);
+    selectedLeft = null;
+    matchedPairs++;
+    showFeedback(true);
+    speakHindi('सही!');
+    if (matchedPairs >= totalPairs) {
+      round++;
+      setTimeout(() => { hideFeedback(); nextRound(); }, 1600);
+    }
+  } else {
+    // Wrong
+    mistakes++;
+    el.classList.add('wrong');
+    showFeedback(false);
+    setTimeout(() => el.classList.remove('wrong'), 600);
+  }
+}
+
+function drawConnector(leftEl, rightEl) {
+  const svg = document.getElementById('connector-svg');
+  const container = document.getElementById('match-columns');
+  const cr  = container.getBoundingClientRect();
+  const lr  = leftEl.getBoundingClientRect();
+  const rr  = rightEl.getBoundingClientRect();
+
+  const x1 = lr.right  - cr.left;
+  const y1 = lr.top + lr.height / 2 - cr.top;
+  const x2 = rr.left   - cr.left;
+  const y2 = rr.top + rr.height / 2 - cr.top;
+
+  const colors = ['#4CAF50','#2196F3','#FF8C00','#9C27B0','#F44336'];
+  const color  = colors[matchedPairs % colors.length];
+
+  const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+  line.setAttribute('x1', x1); line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2); line.setAttribute('y2', y2);
+  line.setAttribute('stroke', color);
+  line.setAttribute('stroke-width', '5');
+  line.setAttribute('stroke-linecap', 'round');
+  line.setAttribute('opacity', '0.75');
+  svg.appendChild(line);
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>

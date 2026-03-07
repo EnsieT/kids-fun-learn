@@ -19,6 +19,7 @@
 <div id="game-area">
   <div class="question-area">
     <p class="question-text">आगे क्या आएगा? What comes next? 👇</p>
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
   <div class="pattern-display" id="pattern-display"></div>
@@ -83,6 +84,9 @@ function generatePatterns() {
 let allPatterns = [];
 const TOTAL_ROUNDS = 10;
 let round = 0, mistakes = 0, answered = false;
+const currentPrompt = 'आगे क्या आएगा?';
+
+function hearAgain() { speakHindi(currentPrompt); }
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
@@ -98,6 +102,7 @@ function nextRound() {
   answered = false;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
+  speakHindi(currentPrompt);
 
   const p = allPatterns[round % allPatterns.length];
   document.getElementById('pattern-display').textContent =

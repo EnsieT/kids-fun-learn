@@ -38,6 +38,7 @@
   <span class="home-emoji">🎓</span>
   <h1>Kids Fun Learn</h1>
   <p class="hero-tagline">मज़ेदार शिक्षा · Fun Education for Ages 4–6</p>
+  <div class="voice-badge">🔊 आवाज़ के साथ! With voice!</div>
 </header>
 
 <main class="container">
@@ -97,6 +98,27 @@
         <span class="card-stars" id="stars-odd-one-out"></span>
       </a>
 
+      <a href="activities/match-columns.html" class="activity-card card-match-columns">
+        <span class="card-emoji">🔗</span>
+        <span class="card-title">Match Columns</span>
+        <span class="card-subtitle">मिलाओ</span>
+        <span class="card-stars" id="stars-match-columns"></span>
+      </a>
+
+      <a href="activities/memory-game.html" class="activity-card card-memory">
+        <span class="card-emoji">🃏</span>
+        <span class="card-title">Memory Game</span>
+        <span class="card-subtitle">जोड़ी ढूंढो</span>
+        <span class="card-stars" id="stars-memory-game"></span>
+      </a>
+
+      <a href="activities/sorting-game.html" class="activity-card card-sorting">
+        <span class="card-emoji">🧺</span>
+        <span class="card-title">Sort into Baskets</span>
+        <span class="card-subtitle">टोकरी में डालो</span>
+        <span class="card-stars" id="stars-sorting-game"></span>
+      </a>
+
     </div>
   </section>
 
@@ -130,7 +152,10 @@
 
 <script src="js/common.js"></script>
 <script>
-  document.addEventListener('DOMContentLoaded', loadHomeStars);
+  document.addEventListener('DOMContentLoaded', () => {
+    loadHomeStars();
+    speakHindi('नमस्ते! क्या खेलना है?');
+  });
 </script>
 </body>
 </html>

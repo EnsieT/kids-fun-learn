@@ -19,6 +19,7 @@
 <div id="game-area">
   <div class="question-area">
     <p class="question-text" id="question-text">Tap the correct animal!</p>
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
   <div id="feedback-banner" class="feedback-banner"></div>
@@ -53,6 +54,9 @@ const ANIMALS = [
 
 const TOTAL_ROUNDS = 10;
 let round = 0, mistakes = 0, answered = false, correctAnimal = null;
+let currentPrompt = '';
+
+function hearAgain() { speakHindi(currentPrompt); }
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
@@ -72,6 +76,9 @@ function nextRound() {
   correctAnimal = pool[Math.floor(Math.random() * pool.length)];
   document.getElementById('question-text').innerHTML =
     `Tap the <strong>${correctAnimal.hi} (${correctAnimal.en})</strong>! 👆`;
+
+  currentPrompt = correctAnimal.hi + ' को छुओ!';
+  speakHindi(currentPrompt);
 
   const grid = document.getElementById('emoji-grid');
   grid.innerHTML = '';

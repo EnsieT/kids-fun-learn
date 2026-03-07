@@ -134,6 +134,9 @@
     <button class="scene-btn" onclick="loadScene(2,this)">🦚 Peacock</button>
     <button class="scene-btn" onclick="loadScene(3,this)">🏡 House</button>
   </div>
+  <div style="text-align:center; padding:4px 0">
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+  </div>
 
   <!-- Color Legend -->
   <div class="color-legend" id="color-legend"></div>
@@ -259,6 +262,9 @@ const SCENES = [
 let currentScene = 0;
 let selectedColor = 1;
 let painted = {};  // regionId → colorNum
+const currentPrompt = 'रंग भरो!';
+
+function hearAgain() { speakHindi(currentPrompt); }
 
 function loadScene(idx, btnEl) {
   currentScene = idx;
@@ -279,6 +285,7 @@ function loadScene(idx, btnEl) {
   document.querySelectorAll('.palette-btn').forEach(b => {
     b.classList.toggle('active', parseInt(b.dataset.num) === selectedColor);
   });
+  speakHindi(currentPrompt);
 }
 
 function renderLegend(colorNums) {
@@ -308,6 +315,8 @@ function selectColor(num, btn) {
   selectedColor = num;
   document.querySelectorAll('.palette-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  const c = COLORS[num];
+  if (c) speakHindi(c.hi);
 }
 
 function renderSVG(scene) {
@@ -350,6 +359,7 @@ function validateColoring() {
 
   if (wrong === 0) {
     launchConfetti();
+    speakHindi('शाबाश! वाह! बहुत सुंदर रंग भरे!');
     setTimeout(() => {
       const stars = calcStars(0);
       saveBestScore('color-by-number', stars);

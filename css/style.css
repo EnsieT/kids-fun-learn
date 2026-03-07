@@ -106,14 +106,52 @@ p  { font-size: clamp(1rem, 2.5vw, 1.3rem); }
 .card-stars { font-size: 1.2rem; letter-spacing: 2px; min-height: 24px; }
 
 /* Card color accents */
-.card-counting   { border-color: var(--yellow); background: #FFFDE7; }
-.card-color      { border-color: var(--pink);   background: #FCE4EC; }
-.card-fruits     { border-color: var(--green);  background: #E8F5E9; }
-.card-animals    { border-color: var(--orange); background: #FFF3E0; }
-.card-shapes     { border-color: var(--blue);   background: #E3F2FD; }
-.card-odd        { border-color: var(--purple); background: #F3E5F5; }
-.card-pattern    { border-color: var(--red);    background: #FFEBEE; }
-.card-math       { border-color: var(--green);  background: #E8F5E9; }
+.card-counting      { border-color: var(--yellow); background: #FFFDE7; }
+.card-color         { border-color: var(--pink);   background: #FCE4EC; }
+.card-fruits        { border-color: var(--green);  background: #E8F5E9; }
+.card-animals       { border-color: var(--orange); background: #FFF3E0; }
+.card-shapes        { border-color: var(--blue);   background: #E3F2FD; }
+.card-odd           { border-color: var(--purple); background: #F3E5F5; }
+.card-pattern       { border-color: var(--red);    background: #FFEBEE; }
+.card-math          { border-color: var(--green);  background: #E8F5E9; }
+.card-match-columns { border-color: #00BCD4;       background: #E0F7FA; }
+.card-memory        { border-color: var(--purple); background: #EDE7F6; }
+.card-sorting       { border-color: var(--orange); background: #FFF3E0; }
+
+/* ===== Hear / Speak Button ===== */
+.hear-btn {
+  background: linear-gradient(135deg, #2196F3, #0D47A1);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(33,150,243,0.4);
+  transition: transform 0.2s, box-shadow 0.2s;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 6px auto;
+  flex-shrink: 0;
+}
+.hear-btn:hover  { transform: scale(1.12); box-shadow: 0 6px 20px rgba(33,150,243,0.55); }
+.hear-btn:active { transform: scale(0.93); }
+
+/* Voice badge on homepage */
+.voice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,255,255,0.25);
+  border-radius: 50px;
+  padding: 6px 16px;
+  margin-top: 10px;
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 700;
+}
 
 /* ===== Activity Page Layout ===== */
 .activity-header {
