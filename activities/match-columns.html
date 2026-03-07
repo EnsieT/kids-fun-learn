@@ -94,7 +94,7 @@
 
 <div id="game-area">
   <div class="question-area">
-    <p class="question-text" id="question-text">मिलाओ! Match them!</p>
+    <p class="question-text" id="match-question">Match them!</p>
     <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
@@ -108,10 +108,10 @@
     <div class="match-columns" id="match-columns">
       <svg id="connector-svg"></svg>
       <div class="match-col" id="left-col">
-        <div class="match-col-label">👈 इन्हें</div>
+        <div class="match-col-label" id="left-col-label">👈</div>
       </div>
       <div class="match-col" id="right-col">
-        <div class="match-col-label">👉 इनसे मिलाओ</div>
+        <div class="match-col-label" id="right-col-label">👉</div>
       </div>
     </div>
   </div>
@@ -129,47 +129,43 @@
 <script>
 const ROUND_TYPES = [
   {
-    titleHi: '🐄 जानवर और आवाज़',
-    titleEn: 'Animals & Sounds',
+    title: {en: '🐄 Animals & Sounds', hi: '🐄 जानवर और आवाज़', gu: '🐄 પ્રાણી અને અવાજ'},
     pairs: [
-      {left:{emoji:'🐄',hi:'गाय',en:'Cow'},     right:{emoji:'🐮',hi:'मू',en:'Moo'}},
-      {left:{emoji:'🐕',hi:'कुत्ता',en:'Dog'},  right:{emoji:'🔔',hi:'भौं भौं',en:'Woof'}},
-      {left:{emoji:'🐈',hi:'बिल्ली',en:'Cat'},  right:{emoji:'🎵',hi:'म्याऊं',en:'Meow'}},
-      {left:{emoji:'🦁',hi:'शेर',en:'Lion'},     right:{emoji:'💥',hi:'दहाड़',en:'Roar'}},
-      {left:{emoji:'🐘',hi:'हाथी',en:'Elephant'},right:{emoji:'📢',hi:'चिंघाड़',en:'Trumpet'}},
+      {left:{emoji:'🐄',en:'Cow',hi:'गाय',gu:'ગાય'},         right:{emoji:'🐮',en:'Moo',hi:'मू',gu:'બા'}},
+      {left:{emoji:'🐕',en:'Dog',hi:'कुत्ता',gu:'કૂતરો'},    right:{emoji:'🔔',en:'Woof',hi:'भौं भौं',gu:'ભૌ ભૌ'}},
+      {left:{emoji:'🐈',en:'Cat',hi:'बिल्ली',gu:'બિલાડી'},   right:{emoji:'🎵',en:'Meow',hi:'म्याऊं',gu:'મ્યાઉ'}},
+      {left:{emoji:'🦁',en:'Lion',hi:'शेर',gu:'સિંહ'},        right:{emoji:'💥',en:'Roar',hi:'दहाड़',gu:'ત્રાડ'}},
+      {left:{emoji:'🐘',en:'Elephant',hi:'हाथी',gu:'હાથી'},  right:{emoji:'📢',en:'Trumpet',hi:'चिंघाड़',gu:'ચિંઘાડ'}},
     ]
   },
   {
-    titleHi: '🥭 फल और रंग',
-    titleEn: 'Fruits & Colors',
+    title: {en: '🥭 Fruits & Colors', hi: '🥭 फल और रंग', gu: '🥭 ફળ અને રંગ'},
     pairs: [
-      {left:{emoji:'🥭',hi:'आम',en:'Mango'},       right:{emoji:'🟡',hi:'पीला',en:'Yellow'}},
-      {left:{emoji:'🍎',hi:'सेब',en:'Apple'},       right:{emoji:'🔴',hi:'लाल',en:'Red'}},
-      {left:{emoji:'🍌',hi:'केला',en:'Banana'},      right:{emoji:'🟡',hi:'पीला',en:'Yellow'}},
-      {left:{emoji:'🍊',hi:'संतरा',en:'Orange'},    right:{emoji:'🟠',hi:'नारंगी',en:'Orange'}},
-      {left:{emoji:'🍇',hi:'अंगूर',en:'Grapes'},    right:{emoji:'🟣',hi:'बैंगनी',en:'Purple'}},
+      {left:{emoji:'🥭',en:'Mango',hi:'आम',gu:'કેરી'},        right:{emoji:'🟡',en:'Yellow',hi:'पीला',gu:'પીળો'}},
+      {left:{emoji:'🍎',en:'Apple',hi:'सेब',gu:'સફરજન'},      right:{emoji:'🔴',en:'Red',hi:'लाल',gu:'લાલ'}},
+      {left:{emoji:'🍌',en:'Banana',hi:'केला',gu:'કેળું'},    right:{emoji:'🟡',en:'Yellow',hi:'पीला',gu:'પીળો'}},
+      {left:{emoji:'🍊',en:'Orange',hi:'संतरा',gu:'નારંગી'},  right:{emoji:'🟠',en:'Orange',hi:'नारंगी',gu:'નારંગી'}},
+      {left:{emoji:'🍇',en:'Grapes',hi:'अंगूर',gu:'દ્રાક્ષ'},right:{emoji:'🟣',en:'Purple',hi:'बैंगनी',gu:'જાંબલો'}},
     ]
   },
   {
-    titleHi: '🔢 संख्या और बिंदु',
-    titleEn: 'Numbers & Dots',
+    title: {en: '🔢 Numbers & Dots', hi: '🔢 संख्या और बिंदु', gu: '🔢 સંખ્યા અને બિંદુ'},
     pairs: [
-      {left:{emoji:'1️⃣',hi:'एक',en:'One'},   right:{emoji:'⚫',hi:'एक बिंदु',en:'1 dot'}},
-      {left:{emoji:'2️⃣',hi:'दो',en:'Two'},   right:{emoji:'⚫⚫',hi:'दो बिंदु',en:'2 dots'}},
-      {left:{emoji:'3️⃣',hi:'तीन',en:'Three'},right:{emoji:'⚫⚫⚫',hi:'तीन बिंदु',en:'3 dots'}},
-      {left:{emoji:'4️⃣',hi:'चार',en:'Four'}, right:{emoji:'⚫⚫⚫⚫',hi:'चार बिंदु',en:'4 dots'}},
-      {left:{emoji:'5️⃣',hi:'पाँच',en:'Five'},right:{emoji:'⚫⚫⚫⚫⚫',hi:'पाँच बिंदु',en:'5 dots'}},
+      {left:{emoji:'1️⃣',en:'One',hi:'एक',gu:'એક'},    right:{emoji:'⚫',en:'1 dot',hi:'एक बिंदु',gu:'1 બિંદુ'}},
+      {left:{emoji:'2️⃣',en:'Two',hi:'दो',gu:'બે'},    right:{emoji:'⚫⚫',en:'2 dots',hi:'दो बिंदु',gu:'2 બિંદુ'}},
+      {left:{emoji:'3️⃣',en:'Three',hi:'तीन',gu:'ત્રણ'},right:{emoji:'⚫⚫⚫',en:'3 dots',hi:'तीन बिंदु',gu:'3 બિંદુ'}},
+      {left:{emoji:'4️⃣',en:'Four',hi:'चार',gu:'ચાર'}, right:{emoji:'⚫⚫⚫⚫',en:'4 dots',hi:'चार बिंदु',gu:'4 બિંદુ'}},
+      {left:{emoji:'5️⃣',en:'Five',hi:'पाँच',gu:'પાંચ'},right:{emoji:'⚫⚫⚫⚫⚫',en:'5 dots',hi:'पाँच बिंदु',gu:'5 બિંદુ'}},
     ]
   },
   {
-    titleHi: '🌍 चीज़ें और श्रेणी',
-    titleEn: 'Things & Categories',
+    title: {en: '🌍 Things & Categories', hi: '🌍 चीज़ें और श्रेणी', gu: '🌍 વસ્તુ અને વર્ગ'},
     pairs: [
-      {left:{emoji:'🥭',hi:'आम',en:'Mango'},   right:{emoji:'🍽️',hi:'फल',en:'Fruit'}},
-      {left:{emoji:'🥔',hi:'आलू',en:'Potato'}, right:{emoji:'🥗',hi:'सब्ज़ी',en:'Veggie'}},
-      {left:{emoji:'🐄',hi:'गाय',en:'Cow'},     right:{emoji:'🐾',hi:'जानवर',en:'Animal'}},
-      {left:{emoji:'🚗',hi:'कार',en:'Car'},     right:{emoji:'🛣️',hi:'वाहन',en:'Vehicle'}},
-      {left:{emoji:'📚',hi:'किताब',en:'Book'},  right:{emoji:'✏️',hi:'पढ़ाई',en:'Study'}},
+      {left:{emoji:'🥭',en:'Mango',hi:'आम',gu:'કેરી'},      right:{emoji:'🍽️',en:'Fruit',hi:'फल',gu:'ફળ'}},
+      {left:{emoji:'🥔',en:'Potato',hi:'आलू',gu:'બટાકા'},   right:{emoji:'🥗',en:'Veggie',hi:'सब्ज़ी',gu:'શાકભાજી'}},
+      {left:{emoji:'🐄',en:'Cow',hi:'गाय',gu:'ગાય'},         right:{emoji:'🐾',en:'Animal',hi:'जानवर',gu:'પ્રાણી'}},
+      {left:{emoji:'🚗',en:'Car',hi:'कार',gu:'કાર'},          right:{emoji:'🛣️',en:'Vehicle',hi:'वाहन',gu:'વાહન'}},
+      {left:{emoji:'📚',en:'Book',hi:'किताब',gu:'પુસ્તક'},   right:{emoji:'✏️',en:'Study',hi:'पढ़ाई',gu:'અભ્યાસ'}},
     ]
   },
 ];
@@ -181,14 +177,37 @@ let selectedLeft = null;
 let matchedPairs = 0;
 let totalPairs = 0;
 let currentPairs = [];
-let currentPrompt = 'मिलाओ!';
-const PROMPT_SELECT_LEFT = 'पहले बाईं तरफ से चुनो!';
 
-function hearAgain() { speakHindi(currentPrompt); }
+function getPrompt() {
+  return t({en: 'Match them!', hi: 'मिलाओ!', gu: 'મેળવો!'});
+}
+function hearAgain() {
+  speak({en: 'Match them!', hi: 'मिलाओ!', gu: 'મેળવો!'});
+}
+
+function onLanguageChange() {
+  document.getElementById('match-question').textContent = getPrompt();
+  document.getElementById('left-col-label').textContent = '👈 ' + t({en: 'These', hi: 'इन्हें', gu: 'આ'});
+  document.getElementById('right-col-label').textContent = '👉 ' + t({en: 'Match with', hi: 'इनसे मिलाओ', gu: 'સાથે મેળવો'});
+  // Update round badge
+  if (roundsQueue[round]) {
+    document.getElementById('round-badge').textContent = t(roundsQueue[round].title);
+  }
+  // Update item labels
+  document.querySelectorAll('#left-col .match-item, #right-col .match-item').forEach(el => {
+    const en = el.dataset.en;
+    const hi = el.dataset.hi;
+    const gu = el.dataset.gu;
+    if (en && hi && gu) {
+      const lbl = el.querySelector('.match-item-label');
+      if (lbl) lbl.textContent = t({en, hi, gu});
+    }
+  });
+  speak({en: 'Match them!', hi: 'मिलाओ!', gu: 'મેળવો!'});
+}
 
 function initGame() {
   round = 0; mistakes = 0; selectedLeft = null;
-  // Build a queue of 8 rounds by cycling through round types
   roundsQueue = [];
   const types = shuffle([...ROUND_TYPES]);
   for (let i = 0; i < TOTAL_ROUNDS; i++) {
@@ -211,38 +230,39 @@ function nextRound() {
   updateProgress(round, TOTAL_ROUNDS);
 
   const rt = roundsQueue[round];
-  document.getElementById('round-badge').textContent = rt.titleHi;
-  currentPrompt = rt.titleHi.replace(/^[^\s]+ /, '') + '! मिलाओ!';
+  document.getElementById('round-badge').textContent = t(rt.title);
+  document.getElementById('match-question').textContent = getPrompt();
+  document.getElementById('left-col-label').textContent = '👈 ' + t({en: 'These', hi: 'इन्हें', gu: 'આ'});
+  document.getElementById('right-col-label').textContent = '👉 ' + t({en: 'Match with', hi: 'इनसे मिलाओ', gu: 'સાથે મેળવો'});
 
-  // Pick 4 pairs from this round type
   currentPairs = shuffle([...rt.pairs]).slice(0, 4);
   totalPairs = currentPairs.length;
 
   const leftItems  = currentPairs.map(p => p.left);
   const rightItems = shuffle(currentPairs.map(p => p.right));
 
-  // Clear SVG connectors
   document.getElementById('connector-svg').innerHTML = '';
 
   renderColumn('left-col',  leftItems,  true);
   renderColumn('right-col', rightItems, false);
 
-  speakHindi(currentPrompt);
+  speak({en: 'Match them!', hi: 'मिलाओ!', gu: 'મેળવો!'});
 }
 
 function renderColumn(colId, items, isLeft) {
   const col = document.getElementById(colId);
-  // Keep label, remove item cards
   const label = col.querySelector('.match-col-label');
   col.innerHTML = '';
   col.appendChild(label);
 
-  items.forEach((item, idx) => {
+  items.forEach((item) => {
     const div = document.createElement('div');
     div.className = 'match-item';
     div.dataset.emoji = item.emoji;
-    div.dataset.hi    = item.hi;
-    div.innerHTML = `<span>${item.emoji}</span><span class="match-item-label">${item.hi}</span>`;
+    div.dataset.en = item.en;
+    div.dataset.hi = item.hi;
+    div.dataset.gu = item.gu || item.en;
+    div.innerHTML = `<span>${item.emoji}</span><span class="match-item-label">${t(item)}</span>`;
     div.onclick = () => isLeft ? handleLeftTap(div) : handleRightTap(div);
     col.appendChild(div);
   });
@@ -250,29 +270,26 @@ function renderColumn(colId, items, isLeft) {
 
 function handleLeftTap(el) {
   if (el.classList.contains('matched')) return;
-  // Deselect previous
   document.querySelectorAll('#left-col .match-item.selected')
     .forEach(e => e.classList.remove('selected'));
   selectedLeft = el;
   el.classList.add('selected');
-  speakHindi(el.dataset.hi);
+  speak({en: el.dataset.en, hi: el.dataset.hi, gu: el.dataset.gu || el.dataset.en});
   hideFeedback();
 }
 
 function handleRightTap(el) {
   if (!selectedLeft) {
-    speakHindi(PROMPT_SELECT_LEFT);
+    speak({en: 'Pick from the left first!', hi: 'पहले बाईं तरफ से चुनो!', gu: 'પ્રથમ ડાબી તરફથી પસંદ કરો!'});
     return;
   }
   if (el.classList.contains('matched')) return;
 
-  // Find the correct right for the selected left
   const leftEmoji = selectedLeft.dataset.emoji;
   const pair = currentPairs.find(p => p.left.emoji === leftEmoji);
-  const correctHi = pair ? pair.right.hi : null;
+  const correctEn = pair ? pair.right.en : null;
 
-  if (el.dataset.hi === correctHi) {
-    // Correct!
+  if (el.dataset.en === correctEn) {
     el.classList.add('matched');
     selectedLeft.classList.remove('selected');
     selectedLeft.classList.add('matched');
@@ -280,13 +297,12 @@ function handleRightTap(el) {
     selectedLeft = null;
     matchedPairs++;
     showFeedback(true);
-    speakHindi('सही!');
+    speak({en: 'Correct!', hi: 'सही!', gu: 'સાચું!'});
     if (matchedPairs >= totalPairs) {
       round++;
       setTimeout(() => { hideFeedback(); nextRound(); }, 1600);
     }
   } else {
-    // Wrong
     mistakes++;
     el.classList.add('wrong');
     showFeedback(false);
@@ -319,7 +335,7 @@ function drawConnector(leftEl, rightEl) {
   svg.appendChild(line);
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); initGame(); });
 </script>
 </body>
 </html>

@@ -40,16 +40,16 @@
 <script src="../js/common.js"></script>
 <script>
 const OBJECTS = [
-  {emoji: '🥭', name: 'Mango',    hi: 'आम'},
-  {emoji: '🍌', name: 'Banana',   hi: 'केला'},
-  {emoji: '🥥', name: 'Coconut',  hi: 'नारियल'},
-  {emoji: '🍎', name: 'Apple',    hi: 'सेब'},
-  {emoji: '🌸', name: 'Flower',   hi: 'फूल'},
-  {emoji: '⭐', name: 'Star',     hi: 'तारा'},
-  {emoji: '🪔', name: 'Diya',     hi: 'दिया'},
-  {emoji: '🍬', name: 'Candy',    hi: 'टॉफ़ी'},
-  {emoji: '🐘', name: 'Elephant', hi: 'हाथी'},
-  {emoji: '🦚', name: 'Peacock',  hi: 'मोर'},
+  {emoji: '🥭', en: 'Mango',    hi: 'आम',     gu: 'કેરી'},
+  {emoji: '🍌', en: 'Banana',   hi: 'केला',    gu: 'કેળું'},
+  {emoji: '🥥', en: 'Coconut',  hi: 'नारियल',  gu: 'નાળિયેર'},
+  {emoji: '🍎', en: 'Apple',    hi: 'सेब',     gu: 'સફરજન'},
+  {emoji: '🌸', en: 'Flower',   hi: 'फूल',     gu: 'ફૂલ'},
+  {emoji: '⭐', en: 'Star',     hi: 'तारा',    gu: 'તારો'},
+  {emoji: '🪔', en: 'Diya',     hi: 'दिया',    gu: 'દીવો'},
+  {emoji: '🍬', en: 'Candy',    hi: 'टॉफ़ी',   gu: 'ટૉફી'},
+  {emoji: '🐘', en: 'Elephant', hi: 'हाथी',    gu: 'હાથી'},
+  {emoji: '🦚', en: 'Peacock',  hi: 'मोर',     gu: 'મોર'},
 ];
 
 const TOTAL_ROUNDS = 10;
@@ -57,9 +57,37 @@ let round = 0;
 let mistakes = 0;
 let answered = false;
 let correctAnswer = 0;
-let currentPrompt = '';
+let currentObj = null;
+let currentCount = 0;
 
-function hearAgain() { speakHindi(currentPrompt); }
+function getQuestionText() {
+  if (!currentObj) return '';
+  return t({
+    en: `How many ${currentObj.en}s?`,
+    hi: `कितने ${currentObj.hi} हैं?`,
+    gu: `કેટલા ${currentObj.gu} છે?`
+  });
+}
+
+function hearAgain() {
+  if (!currentObj) return;
+  speak({
+    en: `How many ${currentObj.en}s? Count!`,
+    hi: `कितने ${currentObj.hi} हैं? गिनो!`,
+    gu: `કેટલા ${currentObj.gu} છે? ગણો!`
+  });
+}
+
+function onLanguageChange() {
+  if (currentObj) {
+    document.getElementById('question-text').textContent = getQuestionText();
+    speak({
+      en: `How many ${currentObj.en}s? Count!`,
+      hi: `कितने ${currentObj.hi} हैं? गिनो!`,
+      gu: `કેટલા ${currentObj.gu} છે? ગણો!`
+    });
+  }
+}
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
@@ -75,24 +103,24 @@ function nextRound() {
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
 
-  const obj = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
-  const count = 1 + Math.floor(Math.random() * 9); // 1–9
-  correctAnswer = count;
+  currentObj = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
+  currentCount = 1 + Math.floor(Math.random() * 9);
+  correctAnswer = currentCount;
 
-  document.getElementById('emoji-display').textContent = obj.emoji.repeat(count);
-  document.getElementById('question-text').textContent =
-    `कितने ${obj.name} हैं? How many ${obj.name}s?`;
+  document.getElementById('emoji-display').textContent = currentObj.emoji.repeat(currentCount);
+  document.getElementById('question-text').textContent = getQuestionText();
+  speak({
+    en: `How many ${currentObj.en}s? Count!`,
+    hi: `कितने ${currentObj.hi} हैं? गिनो!`,
+    gu: `કેટલા ${currentObj.gu} છે? ગણો!`
+  });
 
-  currentPrompt = 'कितने ' + obj.hi + ' हैं? गिनो!';
-  speakHindi(currentPrompt);
-
-  // Generate choices: correct + 3 wrong
   const wrong = new Set();
   while (wrong.size < 3) {
     const n = 1 + Math.floor(Math.random() * 9);
-    if (n !== count) wrong.add(n);
+    if (n !== currentCount) wrong.add(n);
   }
-  const choices = shuffle([count, ...wrong]);
+  const choices = shuffle([currentCount, ...wrong]);
 
   const grid = document.getElementById('choices-grid');
   grid.innerHTML = '';
@@ -121,7 +149,7 @@ function handleChoice(btn, value) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); initGame(); });
 </script>
 </body>
 </html>

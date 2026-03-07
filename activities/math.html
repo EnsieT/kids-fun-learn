@@ -18,7 +18,7 @@
 
 <div id="game-area">
   <div class="question-area">
-    <p class="question-text" id="question-text">जवाब क्या है? What is the answer?</p>
+    <p class="question-text" id="math-question">What is the answer?</p>
     <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
@@ -40,13 +40,42 @@
 <script src="../js/common.js"></script>
 <script>
 const MATH_OBJECTS = ['🥭','🍌','🥥','🍐','🍎','🐘','🦚','🌸','⭐','🪔'];
-const HINDI_NUMS = ['शून्य','एक','दो','तीन','चार','पाँच','छः','सात','आठ','नौ','दस'];
+const NUMS = {
+  en: ['zero','one','two','three','four','five','six','seven','eight','nine','ten'],
+  hi: ['शून्य','एक','दो','तीन','चार','पाँच','छः','सात','आठ','नौ','दस'],
+  gu: ['શૂન્ય','એક','બે','ત્રણ','ચાર','પાંચ','છ','સાત','આઠ','નવ','દસ']
+};
 
 const TOTAL_ROUNDS = 10;
 let round = 0, mistakes = 0, answered = false, correctAnswer = 0;
-let currentPrompt = '';
+let currentA = 0, currentB = 0, currentIsAdd = true;
 
-function hearAgain() { speakHindi(currentPrompt); }
+function buildSpeakPrompt() {
+  if (currentIsAdd) {
+    return {
+      en: `${NUMS.en[currentA]} plus ${NUMS.en[currentB]}, how many?`,
+      hi: `${NUMS.hi[currentA]} और ${NUMS.hi[currentB]}, कितने हुए?`,
+      gu: `${NUMS.gu[currentA]} અને ${NUMS.gu[currentB]}, કેટલા થયા?`
+    };
+  } else {
+    return {
+      en: `${NUMS.en[currentA]} minus ${NUMS.en[currentB]}, how many left?`,
+      hi: `${NUMS.hi[currentA]} में से ${NUMS.hi[currentB]} घटाओ, कितने बचे?`,
+      gu: `${NUMS.gu[currentA]} માંથી ${NUMS.gu[currentB]} બાદ, કેટલા બચ્યા?`
+    };
+  }
+}
+
+function hearAgain() { speak(buildSpeakPrompt()); }
+
+function onLanguageChange() {
+  document.getElementById('math-question').textContent = t({
+    en: 'What is the answer?',
+    hi: 'जवाब क्या है?',
+    gu: 'જવાબ શું છે?'
+  });
+  speak(buildSpeakPrompt());
+}
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
@@ -63,42 +92,37 @@ function nextRound() {
   updateProgress(round, TOTAL_ROUNDS);
 
   const emoji = MATH_OBJECTS[Math.floor(Math.random() * MATH_OBJECTS.length)];
-  const isAdd = Math.random() > 0.4; // 60% addition, 40% subtraction
+  currentIsAdd = Math.random() > 0.4;
 
-  let a, b;
-  if (isAdd) {
-    a = 1 + Math.floor(Math.random() * 5);
-    b = 1 + Math.floor(Math.random() * 5);
-    // Keep total ≤ 10
-    if (a + b > 10) b = 10 - a;
-    correctAnswer = a + b;
+  if (currentIsAdd) {
+    currentA = 1 + Math.floor(Math.random() * 5);
+    currentB = 1 + Math.floor(Math.random() * 5);
+    if (currentA + currentB > 10) currentB = 10 - currentA;
+    correctAnswer = currentA + currentB;
   } else {
-    a = 2 + Math.floor(Math.random() * 8);
-    b = 1 + Math.floor(Math.random() * (a - 1));
-    correctAnswer = a - b;
+    currentA = 2 + Math.floor(Math.random() * 8);
+    currentB = 1 + Math.floor(Math.random() * (currentA - 1));
+    correctAnswer = currentA - currentB;
   }
 
-  const op = isAdd ? '+' : '−';
+  const op = currentIsAdd ? '+' : '−';
   const eq = document.getElementById('math-equation');
   eq.innerHTML = `
-    <div class="math-group">${emoji.repeat(a)}</div>
+    <div class="math-group">${emoji.repeat(currentA)}</div>
     <div class="math-op">${op}</div>
-    <div class="math-group">${isAdd ? emoji.repeat(b) : '<s style="opacity:.45">' + emoji.repeat(b) + '</s>'}</div>
+    <div class="math-group">${currentIsAdd ? emoji.repeat(currentB) : '<s style="opacity:.45">' + emoji.repeat(currentB) + '</s>'}</div>
     <div class="math-eq">=</div>
     <div class="math-q">❓</div>
   `;
 
-  document.getElementById('question-text').textContent =
-    `${a} ${op} ${b} = ?`;
+  document.getElementById('math-question').textContent = t({
+    en: `${currentA} ${op} ${currentB} = ?`,
+    hi: `${currentA} ${op} ${currentB} = ?`,
+    gu: `${currentA} ${op} ${currentB} = ?`
+  });
 
-  if (isAdd) {
-    currentPrompt = HINDI_NUMS[a] + ' और ' + HINDI_NUMS[b] + ', कितने हुए?';
-  } else {
-    currentPrompt = HINDI_NUMS[a] + ' में से ' + HINDI_NUMS[b] + ' घटाओ, कितने बचे?';
-  }
-  speakHindi(currentPrompt);
+  speak(buildSpeakPrompt());
 
-  // Generate choices
   const wrong = new Set();
   while (wrong.size < 3) {
     let n = correctAnswer + (Math.floor(Math.random() * 5) + 1) * (Math.random() > 0.5 ? 1 : -1);
@@ -134,7 +158,7 @@ function handleChoice(btn, value) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); initGame(); });
 </script>
 </body>
 </html>

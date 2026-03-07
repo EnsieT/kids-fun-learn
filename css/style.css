@@ -545,6 +545,52 @@ p  { font-size: clamp(1rem, 2.5vw, 1.3rem); }
   .emoji-grid { grid-template-columns: repeat(3, 1fr); }
 }
 
+/* ===== Language Selector ===== */
+.lang-selector {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(4px);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  border-bottom: 2px solid rgba(0,0,0,0.08);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.lang-btn {
+  padding: 8px 16px;
+  border-radius: 50px;
+  border: 3px solid #ddd;
+  background: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font);
+  min-height: 48px;
+  min-width: 80px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: #333;
+}
+.lang-btn:hover {
+  border-color: var(--orange);
+  background: #FFF3E0;
+  transform: scale(1.05);
+}
+.lang-btn.active {
+  border-color: var(--orange);
+  background: linear-gradient(135deg, #FF8C00, #FFD700);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(255,140,0,0.4);
+}
+
 /* ===== Utility ===== */
 .hidden { display: none !important; }
 .text-center { text-align: center; }

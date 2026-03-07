@@ -18,7 +18,7 @@
 
 <div id="game-area">
   <div class="question-area">
-    <p class="question-text">अलग कौन है? Which one doesn't belong?</p>
+    <p class="question-text" id="odd-question">Which one doesn't belong?</p>
     <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
@@ -37,7 +37,6 @@
 
 <script src="../js/common.js"></script>
 <script>
-// Each puzzle: 3 items from same category + 1 odd one
 const PUZZLES = [
   { items:['🥭','🍌','🥥','🐄'], odd:'🐄',  hint:'Fruits vs Animal' },
   { items:['🐘','🦚','🥭','🐯'], odd:'🥭',  hint:'Animals vs Fruit' },
@@ -59,9 +58,19 @@ const PUZZLES = [
 const TOTAL_ROUNDS = 10;
 let round = 0, mistakes = 0, answered = false;
 let usedPuzzles = [];
-const currentPrompt = 'कौन सा अलग है?';
 
-function hearAgain() { speakHindi(currentPrompt); }
+function getPrompt() {
+  return t({en: "Which one doesn't belong?", hi: 'कौन सा अलग है?', gu: 'કયું અલગ છે?'});
+}
+
+function hearAgain() {
+  speak({en: "Which one doesn't belong?", hi: 'कौन सा अलग है?', gu: 'કયું અલગ છે?'});
+}
+
+function onLanguageChange() {
+  document.getElementById('odd-question').textContent = getPrompt();
+  speak({en: "Which one doesn't belong?", hi: 'कौन सा अलग है?', gu: 'કયું અલગ છે?'});
+}
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
@@ -77,7 +86,8 @@ function nextRound() {
   answered = false;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
-  speakHindi(currentPrompt);
+  document.getElementById('odd-question').textContent = getPrompt();
+  speak({en: "Which one doesn't belong?", hi: 'कौन सा अलग है?', gu: 'કયું અલગ છે?'});
 
   const puzzle = usedPuzzles[round];
   const items  = shuffle(puzzle.items);
@@ -112,7 +122,7 @@ function handleChoice(btn, emoji, odd) {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); initGame(); });
 </script>
 </body>
 </html>

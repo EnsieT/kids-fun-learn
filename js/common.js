@@ -1,22 +1,89 @@
 /**
  * common.js — Shared utilities for Kids Fun Learn
- * Confetti, feedback, grading, localStorage helpers, speech
+ * Confetti, feedback, grading, localStorage helpers, speech, language selector
  */
 
+/* ===== Language Configuration ===== */
+const LANGUAGES = {
+  en: { code: 'en-IN', label: 'English',  flag: '🇬🇧' },
+  hi: { code: 'hi-IN', label: 'हिन्दी',    flag: '🇮🇳' },
+  gu: { code: 'gu-IN', label: 'ગુજરાતી',  flag: '🇮🇳' }
+};
+const LANG_KEY = 'kidsFunLearn_language';
+
+function getCurrentLanguage() {
+  return localStorage.getItem(LANG_KEY) || 'en';
+}
+
+function setLanguage(langKey) {
+  if (!LANGUAGES[langKey]) return;
+  localStorage.setItem(LANG_KEY, langKey);
+  updateLanguageSelectorUI();
+  if (typeof onLanguageChange === 'function') onLanguageChange(langKey);
+}
+
+/** Return the text for the current language from a textMap {en, hi, gu} */
+function t(textMap) {
+  if (typeof textMap === 'string') return textMap;
+  const lang = getCurrentLanguage();
+  return textMap[lang] || textMap['en'] || '';
+}
+
 /* ===== Speech (Web Speech API) ===== */
-function speak(text, lang) {
+/**
+ * speak(textOrMap, lang)
+ *   textOrMap: string  → speak as-is with given lang (or hi-IN default)
+ *   textOrMap: {en,hi,gu} → speak in current language
+ */
+function speak(textOrMap, lang) {
   if (!window.speechSynthesis) return;
-  // Cancel any ongoing speech before queuing the new utterance
   window.speechSynthesis.cancel();
+  let text, langCode;
+  if (textOrMap && typeof textOrMap === 'object') {
+    const cur = getCurrentLanguage();
+    text = textOrMap[cur] || textOrMap['en'] || '';
+    langCode = LANGUAGES[cur].code;
+  } else {
+    text = textOrMap || '';
+    langCode = lang || 'hi-IN';
+  }
+  if (!text) return;
   const utter = new SpeechSynthesisUtterance(text);
-  utter.lang  = lang || 'hi-IN';
+  utter.lang  = langCode;
   utter.rate  = 0.85;
   utter.pitch = 1.1;
-  // Small delay ensures the cancel() has cleared the queue before speaking
   setTimeout(() => window.speechSynthesis.speak(utter), 150);
 }
 function speakHindi(text)   { speak(text, 'hi-IN'); }
 function speakEnglish(text) { speak(text, 'en-IN'); }
+
+/* ===== Language Selector UI ===== */
+function injectLanguageSelector() {
+  if (document.getElementById('lang-selector')) return;
+  const bar = document.createElement('div');
+  bar.id = 'lang-selector';
+  bar.className = 'lang-selector';
+  const cur = getCurrentLanguage();
+  bar.innerHTML = Object.entries(LANGUAGES).map(([key, lang]) =>
+    `<button class="lang-btn${cur === key ? ' active' : ''}" data-lang="${key}"
+             onclick="setLanguage('${key}')" aria-label="Switch to ${lang.label}">
+       ${lang.flag} ${lang.label}
+     </button>`
+  ).join('');
+  const header = document.querySelector('.activity-header') || document.querySelector('.site-header');
+  if (header && header.parentNode) {
+    header.parentNode.insertBefore(bar, header.nextSibling);
+  } else {
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+}
+
+function updateLanguageSelectorUI() {
+  const cur = getCurrentLanguage();
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.lang === cur);
+  });
+}
 
 /* ===== Confetti ===== */
 const CONFETTI_COLORS = ['#FFD700','#FF8C00','#FF69B4','#4CAF50','#2196F3','#9C27B0','#F44336'];
@@ -79,14 +146,14 @@ function showFeedback(correct) {
   banner.classList.remove('show', 'correct-fb', 'wrong-fb');
   void banner.offsetWidth; // reflow
   if (correct) {
-    banner.textContent = '🎉 शाबाश! Well done!';
+    banner.textContent = '🎉 ' + t({en: 'Well done!', hi: 'शाबाश!', gu: 'શાબાશ!'});
     banner.classList.add('show', 'correct-fb');
     launchConfetti();
-    speakHindi('शाबाश!');
+    speak({en: 'Well done!', hi: 'शाबाश!', gu: 'શાબાશ!'});
   } else {
-    banner.textContent = '❌ फिर से कोशिश करो! Try again!';
+    banner.textContent = '❌ ' + t({en: 'Try again!', hi: 'फिर से कोशिश करो!', gu: 'ફરી પ્રયત્ન કરો!'});
     banner.classList.add('show', 'wrong-fb');
-    speakHindi('फिर से कोशिश करो!');
+    speak({en: 'Try again!', hi: 'फिर से कोशिश करो!', gu: 'ફરી પ્રયત્ન કરો!'});
   }
 }
 
@@ -153,14 +220,14 @@ function showCompletion(activity, mistakes, total) {
   if (starsEl) starsEl.textContent = starsHTML(stars);
   if (titleEl) {
     if (stars === 3) {
-      titleEl.textContent = '🎊 शानदार! Excellent!';
-      speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!');
+      titleEl.textContent = '🎊 ' + t({en: 'Excellent!', hi: 'शानदार!', gu: 'ખૂબ સરસ!'});
+      speak({en: 'Excellent! You earned 3 stars!', hi: 'बहुत अच्छा! तुमने तीन सितारे कमाए!', gu: 'ખૂબ સરસ! તમે 3 સ્ટાર મેળવ્યા!'});
     } else if (stars === 2) {
-      titleEl.textContent = '👏 बहुत अच्छा! Very Good!';
-      speakHindi('बहुत अच्छा! तुमने दो सितारे कमाए!');
+      titleEl.textContent = '👏 ' + t({en: 'Very Good!', hi: 'बहुत अच्छा!', gu: 'ખૂબ સારું!'});
+      speak({en: 'Very good! You earned 2 stars!', hi: 'बहुत अच्छा! तुमने दो सितारे कमाए!', gu: 'ખૂબ સારું! તમે 2 સ્ટાર મેળવ્યા!'});
     } else {
-      titleEl.textContent = '💪 अच्छा प्रयास! Good Try!';
-      speakHindi('अच्छा प्रयास! एक सितारा!');
+      titleEl.textContent = '💪 ' + t({en: 'Good Try!', hi: 'अच्छा प्रयास!', gu: 'સારો પ્રયત્ન!'});
+      speak({en: 'Good try! You earned 1 star!', hi: 'अच्छा प्रयास! एक सितारा!', gu: 'સારો પ્રયત્ન! 1 સ્ટાર!'});
     }
   }
   if (scoreEl) scoreEl.textContent = `Score: ${total - mistakes} / ${total}`;
