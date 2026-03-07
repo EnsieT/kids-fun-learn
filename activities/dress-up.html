@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>👗 Dress Up · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .dressup-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 12px 32px;
+  }
+
+  /* ===== Festival Tabs ===== */
+  .festival-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 4px 8px;
+    flex-wrap: wrap;
+  }
+  .festival-nav-arrow {
+    background: rgba(255,140,0,0.15);
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    font-size: 1.4rem;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.2s, transform 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .festival-nav-arrow:hover  { background: rgba(255,140,0,0.3); transform: scale(1.1); }
+  .festival-nav-arrow:active { transform: scale(0.92); }
+  .festival-tabs {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    flex: 1;
+  }
+  .festival-tab {
+    background: #fff;
+    border: 3px solid #ddd;
+    border-radius: 50px;
+    padding: 7px 16px;
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  .festival-tab:hover  { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+  .festival-tab:active { transform: scale(0.96); }
+  .festival-tab.active {
+    background: linear-gradient(135deg, #FF8C00, #FFD700);
+    border-color: #FF8C00;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(255,140,0,0.4);
+  }
+  .festival-label {
+    font-size: clamp(1.2rem, 4vw, 1.5rem);
+    font-weight: 900;
+    text-align: center;
+    color: var(--orange);
+    margin: 6px 0 2px;
+  }
+
+  /* ===== Character Stage ===== */
+  .stage-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 0 0;
+  }
+  .character-frame {
+    position: relative;
+    width: 160px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: #fff;
+    border-radius: 24px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+    padding: 12px 8px 16px;
+  }
+  .char-head    { font-size: 3.2rem; line-height: 1.1; }
+  .char-body {
+    width: 52px;
+    height: 68px;
+    background: linear-gradient(180deg, #FFDDC1, #FFB347);
+    border-radius: 8px 8px 14px 14px;
+    margin: 4px 0 2px;
+    position: relative;
+  }
+  .char-arms {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90px;
+    height: 16px;
+    background: linear-gradient(90deg, #FFDDC1 0%, #FFB347 50%, #FFDDC1 100%);
+    border-radius: 50px;
+  }
+  .char-legs {
+    display: flex;
+    gap: 8px;
+  }
+  .char-leg {
+    width: 20px;
+    height: 40px;
+    background: linear-gradient(180deg, #FFDDC1, #FFB347);
+    border-radius: 0 0 8px 8px;
+  }
+  /* Worn item slots — absolutely positioned around character */
+  .worn-slot {
+    position: absolute;
+    font-size: 1.8rem;
+    line-height: 1;
+    transition: all 0.3s cubic-bezier(.34,1.56,.64,1);
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0);
+  }
+  .worn-slot.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+  /* 8 preset positions around / on the character */
+  .worn-slot:nth-child(1)  { top: -16px;  left: -22px;  }
+  .worn-slot:nth-child(2)  { top: -16px;  right: -22px; }
+  .worn-slot:nth-child(3)  { top: 28px;   left: -28px;  }
+  .worn-slot:nth-child(4)  { top: 28px;   right: -28px; }
+  .worn-slot:nth-child(5)  { top: 76px;   left: -24px;  }
+  .worn-slot:nth-child(6)  { top: 76px;   right: -24px; }
+  .worn-slot:nth-child(7)  { bottom: -18px; left: -20px; }
+  .worn-slot:nth-child(8)  { bottom: -18px; right: -20px;}
+
+  /* ===== Items Grid ===== */
+  .items-section {
+    margin-top: 24px;
+  }
+  .items-title {
+    text-align: center;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #888;
+    margin-bottom: 10px;
+    letter-spacing: 0.5px;
+  }
+  .items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+    gap: 12px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .dress-item {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 12px 8px;
+    cursor: pointer;
+    text-align: center;
+    border: 4px solid transparent;
+    transition: transform 0.18s, border-color 0.2s, box-shadow 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    position: relative;
+    user-select: none;
+    min-height: 90px;
+    justify-content: center;
+  }
+  .dress-item:hover  { transform: scale(1.08); box-shadow: 0 6px 20px rgba(0,0,0,0.16); }
+  .dress-item:active { transform: scale(0.94); }
+  .dress-item.selected {
+    border-color: var(--green);
+    background: #E8F5E9;
+    box-shadow: 0 0 0 2px #4CAF5033;
+  }
+  .dress-item .item-emoji { font-size: 2.6rem; line-height: 1; }
+  .dress-item .item-hi    { font-size: 0.75rem; font-weight: 700; color: #555; }
+  .dress-item .item-check {
+    position: absolute;
+    top: 4px;
+    right: 6px;
+    font-size: 1rem;
+    opacity: 0;
+    transition: opacity 0.25s, transform 0.25s;
+    transform: scale(0);
+  }
+  .dress-item.selected .item-check {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* ===== Celebration Banner ===== */
+  .celebration-banner {
+    text-align: center;
+    background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+    border: 3px solid var(--green);
+    border-radius: 18px;
+    padding: 14px 18px;
+    margin: 16px 0 0;
+    font-size: clamp(1.1rem, 4vw, 1.5rem);
+    font-weight: 900;
+    color: #2E7D32;
+    box-shadow: 0 4px 16px rgba(76,175,80,0.2);
+    display: none;
+    animation: fadeIn 0.4s ease;
+  }
+  .celebration-banner.show { display: block; }
+
+  /* ===== Footer Buttons ===== */
+  .footer-btns {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    padding: 20px 0 4px;
+  }
+  .foot-btn {
+    background: #fff;
+    border: 3px solid #ddd;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .foot-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,0.16); }
+  .foot-btn:active { transform: scale(0.95); }
+  .foot-btn.home-btn  { border-color: var(--orange); color: var(--orange); }
+  .foot-btn.reset-btn { border-color: #9C27B0;       color: #9C27B0; }
+
+  /* ===== Ripple on tap ===== */
+  @keyframes dress-ripple {
+    0%   { transform: scale(0); opacity: 0.6; }
+    100% { transform: scale(2.5); opacity: 0; }
+  }
+  .dress-item .ripple {
+    position: absolute;
+    width: 100%; height: 100%;
+    border-radius: 14px;
+    background: rgba(76,175,80,0.3);
+    animation: dress-ripple 0.45s ease-out forwards;
+    pointer-events: none;
+    top: 0; left: 0;
+  }
+
+  @media (max-width: 400px) {
+    .items-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .dress-item { padding: 10px 4px; min-height: 80px; }
+    .dress-item .item-emoji { font-size: 2.2rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>👗 Dress Up / कपड़े पहनाओ</h1>
+</header>
+
+<div class="dressup-wrap">
+
+  <!-- Festival Navigation -->
+  <div class="festival-nav">
+    <button class="festival-nav-arrow" onclick="prevFestival()" aria-label="Previous">◀</button>
+    <div class="festival-tabs" id="festival-tabs"></div>
+    <button class="festival-nav-arrow" onclick="nextFestival()" aria-label="Next">▶</button>
+  </div>
+  <p class="festival-label" id="festival-label"></p>
+
+  <!-- Character Stage -->
+  <div class="stage-area">
+    <div class="character-frame" id="character-frame">
+      <div class="char-head">😊</div>
+      <div class="char-body">
+        <div class="char-arms"></div>
+      </div>
+      <div class="char-legs">
+        <div class="char-leg"></div>
+        <div class="char-leg"></div>
+      </div>
+      <!-- 8 worn-item slots -->
+      <div class="worn-slot" id="ws0"></div>
+      <div class="worn-slot" id="ws1"></div>
+      <div class="worn-slot" id="ws2"></div>
+      <div class="worn-slot" id="ws3"></div>
+      <div class="worn-slot" id="ws4"></div>
+      <div class="worn-slot" id="ws5"></div>
+      <div class="worn-slot" id="ws6"></div>
+      <div class="worn-slot" id="ws7"></div>
+    </div>
+  </div>
+
+  <!-- Celebration Banner -->
+  <div class="celebration-banner" id="celebration-banner">
+    ✨ बहुत सुंदर! Very Beautiful! ✨
+  </div>
+
+  <!-- Clothing Items -->
+  <div class="items-section">
+    <p class="items-title">👆 टैप करके पहनाओ · Tap to dress up!</p>
+    <div class="items-grid" id="items-grid"></div>
+  </div>
+
+  <!-- Footer Buttons -->
+  <div class="footer-btns">
+    <button class="foot-btn home-btn"  onclick="goHome()">🏠 Home</button>
+    <button class="foot-btn reset-btn" onclick="resetDressup()">🔄 Reset / फिर से</button>
+  </div>
+
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+// ===== Festival Data =====
+const FESTIVALS = [
+  {
+    id: 'diwali',
+    emoji: '🪔',
+    en: 'Diwali',
+    hi: 'दीवाली',
+    speak: 'दीवाली के कपड़े पहनाओ!',
+    items: [
+      { emoji: '👘', hi: 'कुर्ता',    en: 'Kurta'   },
+      { emoji: '👗', hi: 'साड़ी',     en: 'Saree'   },
+      { emoji: '💍', hi: 'चूड़ियाँ',  en: 'Bangles' },
+      { emoji: '🧨', hi: 'पटाखे',    en: 'Crackers'},
+      { emoji: '🪔', hi: 'दिया',      en: 'Diya'    },
+      { emoji: '✨', hi: 'टीका',      en: 'Teeka'   },
+      { emoji: '👑', hi: 'मुकुट',     en: 'Crown'   },
+    ]
+  },
+  {
+    id: 'holi',
+    emoji: '🎨',
+    en: 'Holi',
+    hi: 'होली',
+    speak: 'होली के रंग लगाओ!',
+    items: [
+      { emoji: '👕', hi: 'कुर्ता',      en: 'Kurta'   },
+      { emoji: '🎨', hi: 'रंग',         en: 'Colors'  },
+      { emoji: '💦', hi: 'पिचकारी',    en: 'Pichkari'},
+      { emoji: '🌺', hi: 'गुलाल',      en: 'Gulal'   },
+      { emoji: '😊', hi: 'रंग लगाओ',   en: 'Get Colored'},
+      { emoji: '🌈', hi: 'इंद्रधनुष',  en: 'Rainbow' },
+    ]
+  },
+  {
+    id: 'eid',
+    emoji: '🌙',
+    en: 'Eid',
+    hi: 'ईद',
+    speak: 'ईद मुबारक! कपड़े पहनाओ!',
+    items: [
+      { emoji: '🕌', hi: 'शेरवानी',  en: 'Sherwani'},
+      { emoji: '🎁', hi: 'इनाम',     en: 'Gift'    },
+      { emoji: '🌙', hi: 'चाँद',     en: 'Moon'    },
+      { emoji: '💫', hi: 'सेवई',     en: 'Sewai'   },
+      { emoji: '🧿', hi: 'मेहंदी',   en: 'Mehndi'  },
+      { emoji: '🌟', hi: 'तारा',     en: 'Star'    },
+    ]
+  },
+  {
+    id: 'daily',
+    emoji: '🎒',
+    en: 'Daily',
+    hi: 'रोज़ के',
+    speak: 'स्कूल के लिए तैयार हो जाओ!',
+    items: [
+      { emoji: '👔', hi: 'यूनीफॉर्म', en: 'Uniform' },
+      { emoji: '🎒', hi: 'बस्ता',     en: 'Bag'     },
+      { emoji: '✏️', hi: 'पेंसिल',   en: 'Pencil'  },
+      { emoji: '📚', hi: 'किताब',     en: 'Book'    },
+      { emoji: '👟', hi: 'जूते',      en: 'Shoes'   },
+      { emoji: '🍱', hi: 'टिफिन',    en: 'Tiffin'  },
+    ]
+  }
+];
+
+let currentFestivalIdx = 0;
+let selected = new Set();   // indices of selected items in current festival
+let celebrationShown = false;
+
+// ===== Build Tabs =====
+function buildTabs() {
+  const container = document.getElementById('festival-tabs');
+  container.innerHTML = '';
+  FESTIVALS.forEach((f, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'festival-tab' + (i === currentFestivalIdx ? ' active' : '');
+    btn.innerHTML = `${f.emoji} ${f.en}`;
+    btn.setAttribute('aria-label', f.hi);
+    btn.onclick = () => switchFestival(i);
+    container.appendChild(btn);
+  });
+}
+
+// ===== Render Items Grid =====
+function renderItems() {
+  const festival = FESTIVALS[currentFestivalIdx];
+  const grid = document.getElementById('items-grid');
+  grid.innerHTML = '';
+
+  festival.items.forEach((item, idx) => {
+    const div = document.createElement('div');
+    div.className = 'dress-item' + (selected.has(idx) ? ' selected' : '');
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', item.hi + ' ' + item.en);
+    div.innerHTML = `
+      <span class="item-emoji">${item.emoji}</span>
+      <span class="item-hi">${item.hi}</span>
+      <span class="item-check">✅</span>
+    `;
+    div.onclick = () => toggleItem(div, idx, item);
+    grid.appendChild(div);
+  });
+}
+
+// ===== Toggle Item Selection =====
+function toggleItem(el, idx, item) {
+  // Ripple effect
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  el.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 500);
+
+  if (selected.has(idx)) {
+    selected.delete(idx);
+    el.classList.remove('selected');
+    speak(item.hi, 'hi-IN');
+  } else {
+    selected.add(idx);
+    el.classList.add('selected');
+    speak(item.hi + '। ' + item.en, 'hi-IN');
+  }
+
+  updateWornItems();
+  checkCelebration();
+}
+
+// ===== Update Worn Slots =====
+function updateWornItems() {
+  const festival = FESTIVALS[currentFestivalIdx];
+  const slots = document.querySelectorAll('.worn-slot');
+  const selectedItems = [...selected].map(i => festival.items[i]);
+
+  slots.forEach((slot, i) => {
+    if (i < selectedItems.length) {
+      slot.textContent = selectedItems[i].emoji;
+      slot.classList.add('visible');
+    } else {
+      slot.textContent = '';
+      slot.classList.remove('visible');
+    }
+  });
+}
+
+// ===== Celebration Logic =====
+function checkCelebration() {
+  const banner = document.getElementById('celebration-banner');
+  if (selected.size >= 3 && !celebrationShown) {
+    celebrationShown = true;
+    banner.classList.add('show');
+    launchConfetti();
+    speak('बहुत सुंदर! Very Beautiful!', 'hi-IN');
+  } else if (selected.size < 3) {
+    celebrationShown = false;
+    banner.classList.remove('show');
+  }
+}
+
+// ===== Switch Festival =====
+function switchFestival(idx) {
+  currentFestivalIdx = idx;
+  selected.clear();
+  celebrationShown = false;
+  document.getElementById('celebration-banner').classList.remove('show');
+  clearWornSlots();
+
+  const f = FESTIVALS[currentFestivalIdx];
+  document.getElementById('festival-label').textContent = `${f.emoji} ${f.hi} · ${f.en}`;
+  buildTabs();
+  renderItems();
+  speak(f.speak, 'hi-IN');
+}
+
+function prevFestival() {
+  const idx = (currentFestivalIdx - 1 + FESTIVALS.length) % FESTIVALS.length;
+  switchFestival(idx);
+}
+
+function nextFestival() {
+  const idx = (currentFestivalIdx + 1) % FESTIVALS.length;
+  switchFestival(idx);
+}
+
+function clearWornSlots() {
+  document.querySelectorAll('.worn-slot').forEach(s => {
+    s.textContent = '';
+    s.classList.remove('visible');
+  });
+}
+
+// ===== Reset =====
+function resetDressup() {
+  selected.clear();
+  celebrationShown = false;
+  document.getElementById('celebration-banner').classList.remove('show');
+  clearWornSlots();
+  renderItems();
+  speak('फिर से शुरू करो!', 'hi-IN');
+}
+
+// ===== Init =====
+function init() {
+  buildTabs();
+  const f = FESTIVALS[currentFestivalIdx];
+  document.getElementById('festival-label').textContent = `${f.emoji} ${f.hi} · ${f.en}`;
+  renderItems();
+  setTimeout(() => speak('कपड़े पहनाओ!', 'hi-IN'), 600);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
