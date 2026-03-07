@@ -1,0 +1,98 @@
+name: Auto-merge completed pull requests
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+  pull_request_review:
+    types: [submitted]
+  workflow_dispatch:
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    timeout-minutes: 140
+    permissions:
+      pull-requests: write
+      contents: write
+
+    steps:
+      - name: Merge completed PRs and poll for 2 hours
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const POLL_INTERVAL_MS = 5 * 60 * 1000;   // 5 minutes
+            const DURATION_MS      = 2 * 60 * 60 * 1000; // 2 hours
+            const endTime = Date.now() + DURATION_MS;
+
+            async function mergeCompletedPRs() {
+              // Paginate through all open PRs so none are missed
+              let page = 1;
+              let allPrs = [];
+              while (true) {
+                const { data: prs } = await github.rest.pulls.list({
+                  owner:    context.repo.owner,
+                  repo:     context.repo.repo,
+                  state:    'open',
+                  per_page: 100,
+                  page,
+                });
+                allPrs = allPrs.concat(prs);
+                if (prs.length < 100) break;
+                page++;
+              }
+
+              for (const pr of allPrs) {
+                if (pr.draft) {
+                  console.log(`PR #${pr.number} is a draft – skipping.`);
+                  continue;
+                }
+
+                // Fetch full PR to get up-to-date mergeability info
+                const { data: fullPr } = await github.rest.pulls.get({
+                  owner:       context.repo.owner,
+                  repo:        context.repo.repo,
+                  pull_number: pr.number,
+                });
+
+                if (fullPr.merged) {
+                  console.log(`PR #${pr.number} is already merged – skipping.`);
+                  continue;
+                }
+
+                // 'unknown' means GitHub is still computing mergeability; it will
+                // become 'clean' or another state on a subsequent poll.
+                if (fullPr.mergeable_state !== 'clean') {
+                  console.log(`PR #${pr.number} mergeable_state=${fullPr.mergeable_state} – skipping.`);
+                  continue;
+                }
+
+                console.log(`Merging PR #${pr.number}: ${pr.title}`);
+                try {
+                  await github.rest.pulls.merge({
+                    owner:        context.repo.owner,
+                    repo:         context.repo.repo,
+                    pull_number:  pr.number,
+                    merge_method: 'squash',
+                  });
+                  console.log(`✅ Successfully merged PR #${pr.number}.`);
+                } catch (err) {
+                  console.log(`⚠️  Could not merge PR #${pr.number}: ${err.message}`);
+                }
+              }
+            }
+
+            let iteration = 1;
+            while (Date.now() < endTime) {
+              console.log(`\n── Poll #${iteration} (${new Date().toISOString()}) ──`);
+              await mergeCompletedPRs();
+
+              const remaining = endTime - Date.now();
+              if (remaining <= 0) break;
+
+              const wait = Math.min(POLL_INTERVAL_MS, remaining);
+              console.log(`Next poll in ${Math.round(wait / 1000 / 60)} minute(s)…`);
+              await new Promise(resolve => setTimeout(resolve, wait));
+              iteration++;
+            }
+            console.log('\n⏱  2-hour window elapsed – done.');
