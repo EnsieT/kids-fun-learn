@@ -117,6 +117,8 @@ p  { font-size: clamp(1rem, 2.5vw, 1.3rem); }
 .card-match-columns { border-color: #00BCD4;       background: #E0F7FA; }
 .card-memory        { border-color: var(--purple); background: #EDE7F6; }
 .card-sorting       { border-color: var(--orange); background: #FFF3E0; }
+.card-jigsaw        { border-color: var(--purple); background: #F3E5F5; }
+.card-number-line   { border-color: var(--green);  background: #E8F5E9; }
 
 /* ===== Hear / Speak Button ===== */
 .hear-btn {
