@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Tower Build 🏗️ · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .tower-question-area {
+    text-align: center;
+    padding: 12px 16px 6px;
+  }
+  .stats-row {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    padding: 4px 16px 8px;
+    flex-wrap: wrap;
+  }
+  .stat-chip {
+    background: #fff;
+    border-radius: 50px;
+    padding: 5px 14px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #555;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+  }
+  .game-canvas-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 0 16px 4px;
+  }
+  #game-canvas {
+    position: relative;
+    width: 100%;
+    max-width: 380px;
+    height: 520px;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E2FF 35%, #DCEEFF 70%, #E8F5E9 100%);
+    border-radius: 20px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.18);
+    overflow: hidden;
+    cursor: pointer;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    border: 3px solid #81D4FA;
+  }
+  .cloud-decor {
+    position: absolute;
+    top: 12px;
+    pointer-events: none;
+    font-size: 1.5rem;
+    opacity: 0.65;
+  }
+  .cloud-decor.left  { left: 10px; }
+  .cloud-decor.right { right: 10px; }
+  #platform {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: linear-gradient(180deg, #8D6E63, #5D4037);
+    border-top: 4px solid #A1887F;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+    z-index: 2;
+    letter-spacing: 1px;
+  }
+  .stacked-block {
+    position: absolute;
+    border-radius: 8px 8px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.88);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.35);
+    box-shadow: 0 3px 8px rgba(0,0,0,0.22);
+    border-top: 3px solid rgba(255,255,255,0.38);
+    z-index: 1;
+  }
+  #moving-block {
+    position: absolute;
+    border-radius: 8px 8px 6px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 900;
+    color: rgba(255,255,255,0.95);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.35);
+    box-shadow: 0 4px 14px rgba(0,0,0,0.28), 0 0 0 2px rgba(255,255,255,0.28);
+    border-top: 3px solid rgba(255,255,255,0.48);
+    z-index: 3;
+  }
+  .falling-piece {
+    position: absolute;
+    border-radius: 8px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+    animation: fall-piece 0.7s ease-in forwards;
+    z-index: 2;
+    pointer-events: none;
+  }
+  @keyframes fall-piece {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(340px) rotate(28deg); opacity: 0; }
+  }
+  @keyframes block-land {
+    0%   { transform: scaleY(1.14) scaleX(0.93); }
+    55%  { transform: scaleY(0.91) scaleX(1.05); }
+    100% { transform: scaleY(1) scaleX(1); }
+  }
+  .block-land { animation: block-land 0.26s ease-out forwards; }
+  @keyframes perfect-glow {
+    0%,100% { box-shadow: 0 4px 14px rgba(0,0,0,0.28); }
+    45%  { box-shadow: 0 0 0 5px #FFD700, 0 0 16px rgba(255,215,0,0.6), 0 4px 14px rgba(0,0,0,0.28); }
+  }
+  .perfect-glow { animation: perfect-glow 0.45s ease !important; }
+  .score-float {
+    position: absolute;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: #FFD700;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+    animation: float-up 0.9s ease-out forwards;
+    pointer-events: none;
+    z-index: 10;
+    white-space: nowrap;
+  }
+  @keyframes float-up {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-56px); }
+  }
+  #game-over-banner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.72);
+    color: #fff;
+    border-radius: 16px;
+    padding: 16px 28px;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 800;
+    display: none;
+    z-index: 10;
+    line-height: 1.65;
+    backdrop-filter: blur(3px);
+  }
+  #game-over-banner.show { display: block; }
+  .drop-btn {
+    display: block;
+    margin: 10px auto 4px;
+    background: linear-gradient(135deg, #FF8C00, #FFD700);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 14px 44px;
+    font-size: 1.3rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(255,140,0,0.38);
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .drop-btn:hover  { transform: scale(1.07); box-shadow: 0 8px 24px rgba(255,140,0,0.48); }
+  .drop-btn:active { transform: scale(0.95); }
+  .tower-hint {
+    text-align: center;
+    font-size: 0.82rem;
+    color: #bbb;
+    padding: 2px 16px 8px;
+    font-style: italic;
+  }
+  /* Guide arrow */
+  .guide-arrow {
+    position: absolute;
+    bottom: 64px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.6rem;
+    opacity: 0.35;
+    pointer-events: none;
+    animation: bounce-arrow 1.2s ease-in-out infinite;
+    z-index: 0;
+  }
+  @keyframes bounce-arrow {
+    0%,100% { transform: translateX(-50%) translateY(0); }
+    50%      { transform: translateX(-50%) translateY(-8px); }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🏗️ टावर · Tower Build</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/10</span>
+</header>
+
+<div id="game-area">
+  <div class="tower-question-area">
+    <p class="question-text">ब्लॉक रखो! टावर बनाओ! 🏗️<br>
+      <small style="font-size:0.62em;color:#888">Stack blocks! Build the tower!</small>
+    </p>
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-chip">🧱 <span id="blocks-placed">0</span> / 10 blocks</div>
+    <div class="stat-chip">⚡ Level <span id="speed-display">1</span></div>
+  </div>
+
+  <div id="feedback-banner" class="feedback-banner"></div>
+
+  <div class="game-canvas-wrap">
+    <div id="game-canvas">
+      <div class="cloud-decor left">☁️</div>
+      <div class="cloud-decor right">☁️</div>
+      <div class="guide-arrow" id="guide-arrow">👇</div>
+      <div id="tower-stack"></div>
+      <div id="moving-block"></div>
+      <div id="platform">🏕️ ज़मीन · Ground</div>
+      <div id="game-over-banner"></div>
+    </div>
+  </div>
+
+  <button class="drop-btn" id="drop-btn" onclick="handleDrop()">🎯 यहाँ रखो! Drop!</button>
+  <p class="tower-hint">👆 टैप करो या बटन दबाओ · Tap canvas or press button to drop</p>
+</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div style="font-size:4rem;margin:8px 0;">🏗️🌟</div>
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title"  id="completion-title"></div>
+  <div class="completion-score"  id="completion-score"></div>
+  <div class="completion-best"   id="completion-best"></div>
+  <button class="play-again-btn" onclick="restartGame()">🔄 फिर खेलो! Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+// ─── Constants ────────────────────────────────────────────────────────────────
+const BLOCK_H    = 42;
+const PLATFORM_H = 60;
+const BASE_SPEED = 2.2;
+const SPEED_INC  = 0.32;
+const TOLERANCE  = 9;   // px: within this offset → "perfect" alignment
+const WIN_BLOCKS = 10;
+const MIN_WIDTH  = 10;  // px: narrower than this → game over
+
+const COLORS = [
+  '#FF9933', // saffron
+  '#138808', // green
+  '#1565C0', // blue
+  '#FF69B4', // pink
+  '#F9A825', // yellow
+  '#7B1FA2', // purple
+  '#D32F2F', // red
+  '#00838F', // teal
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let GAME_W       = 0;
+let GAME_H       = 520;
+let stack        = [];   // [{x, width, color}]
+let movingX      = 0;
+let movingDir    = 1;
+let movingWidth  = 0;
+let movingColor  = '';
+let animFrame    = null;
+let gameActive   = false;
+let gameEnded    = false;
+let blocksPlaced = 0;
+let dropping     = false;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function hearAgain() { speakHindi('ब्लॉक रखो! टावर बनाओ!'); }
+
+function getBaseMargin() { return Math.round(GAME_W * 0.05); }
+function getBaseX()      { return getBaseMargin(); }
+function getBaseW()      { return GAME_W - getBaseMargin() * 2; }
+function getBlockTop(stackLen) { return GAME_H - PLATFORM_H - (stackLen + 1) * BLOCK_H; }
+function currentSpeed()  { return BASE_SPEED + stack.length * SPEED_INC; }
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function updateMovingBlockEl() {
+  const el = document.getElementById('moving-block');
+  if (!el) return;
+  el.style.left       = movingX + 'px';
+  el.style.width      = movingWidth + 'px';
+  el.style.height     = BLOCK_H + 'px';
+  el.style.top        = getBlockTop(stack.length) + 'px';
+  el.style.background = movingColor;
+  el.style.display    = 'block';
+}
+
+function renderStack() {
+  const container = document.getElementById('tower-stack');
+  container.innerHTML = '';
+  stack.forEach((block, i) => {
+    const el = document.createElement('div');
+    el.className        = 'stacked-block';
+    el.style.left       = block.x + 'px';
+    el.style.width      = block.width + 'px';
+    el.style.height     = BLOCK_H + 'px';
+    el.style.top        = getBlockTop(i) + 'px';
+    el.style.background = block.color;
+    container.appendChild(el);
+  });
+}
+
+function spawnFallingPiece(x, y, w, color) {
+  const canvas = document.getElementById('game-canvas');
+  const el = document.createElement('div');
+  el.className        = 'falling-piece';
+  el.style.left       = x + 'px';
+  el.style.top        = y + 'px';
+  el.style.width      = w + 'px';
+  el.style.height     = BLOCK_H + 'px';
+  el.style.background = color;
+  canvas.appendChild(el);
+  el.addEventListener('animationend', () => el.remove(), { once: true });
+}
+
+function spawnScoreFloat(text, x, y) {
+  const canvas = document.getElementById('game-canvas');
+  const el = document.createElement('div');
+  el.className     = 'score-float';
+  el.textContent   = text;
+  el.style.left    = Math.max(0, x - 30) + 'px';
+  el.style.top     = Math.max(0, y - 10) + 'px';
+  canvas.appendChild(el);
+  el.addEventListener('animationend', () => el.remove(), { once: true });
+}
+
+// ─── Animation Loop ───────────────────────────────────────────────────────────
+function animLoop() {
+  if (!gameActive) return;
+  movingX += currentSpeed() * movingDir;
+
+  if (movingX <= 0) {
+    movingX  = 0;
+    movingDir = 1;
+  }
+  if (movingX + movingWidth >= GAME_W) {
+    movingX  = GAME_W - movingWidth;
+    movingDir = -1;
+  }
+
+  const el = document.getElementById('moving-block');
+  if (el) el.style.left = movingX + 'px';
+
+  animFrame = requestAnimationFrame(animLoop);
+}
+
+function startMovingBlock() {
+  const blockBelow = stack.length > 0
+    ? stack[stack.length - 1]
+    : { x: getBaseX(), width: getBaseW() };
+
+  movingWidth = blockBelow.width;
+  movingColor = COLORS[stack.length % COLORS.length];
+  movingX     = 0;
+  movingDir   = 1;
+  dropping    = false;
+
+  updateMovingBlockEl();
+  document.getElementById('speed-display').textContent = stack.length + 1;
+  document.getElementById('guide-arrow').style.display =
+    stack.length === 0 ? 'block' : 'none';
+
+  gameActive = true;
+  if (animFrame) cancelAnimationFrame(animFrame);
+  animFrame = requestAnimationFrame(animLoop);
+}
+
+// ─── Drop Logic ──────────────────────────────────────────────────────────────
+function handleDrop() {
+  if (!gameActive || dropping || gameEnded) return;
+  dropping   = true;
+  gameActive = false;
+  cancelAnimationFrame(animFrame);
+
+  const blockBelow = stack.length > 0
+    ? stack[stack.length - 1]
+    : { x: getBaseX(), width: getBaseW() };
+
+  // Calculate overlap
+  const leftEdge  = Math.max(movingX, blockBelow.x);
+  const rightEdge = Math.min(movingX + movingWidth, blockBelow.x + blockBelow.width);
+  const overlap   = rightEdge - leftEdge;
+
+  if (overlap <= 0) {
+    speakHindi('अरे! मिस हो गया!');
+    finalizeGame(true);
+    return;
+  }
+
+  let newX     = leftEdge;
+  let newWidth = overlap;
+  let perfect  = false;
+
+  // Perfect alignment check
+  const belowCx  = blockBelow.x + blockBelow.width / 2;
+  const movingCx = movingX + movingWidth / 2;
+  if (Math.abs(movingCx - belowCx) <= TOLERANCE) {
+    newX     = movingX;
+    newWidth = movingWidth;
+    perfect  = true;
+  } else {
+    // Spawn falling overhang piece
+    const blockY = getBlockTop(stack.length);
+    if (movingX < blockBelow.x) {
+      // Left overhang
+      spawnFallingPiece(movingX, blockY, blockBelow.x - movingX, movingColor);
+    } else {
+      // Right overhang
+      spawnFallingPiece(leftEdge + overlap, blockY, movingWidth - overlap, movingColor);
+    }
+  }
+
+  if (newWidth < MIN_WIDTH) {
+    speakHindi('टावर गिर गया!');
+    finalizeGame(false);
+    return;
+  }
+
+  // Place the block
+  stack.push({ x: newX, width: newWidth, color: movingColor });
+  blocksPlaced++;
+  renderStack();
+  updateProgress(blocksPlaced, WIN_BLOCKS);
+  document.getElementById('score-display').textContent  = `${blocksPlaced}/${WIN_BLOCKS}`;
+  document.getElementById('blocks-placed').textContent  = blocksPlaced;
+
+  // Animate the freshly placed top block
+  const topEl = document.getElementById('tower-stack').lastElementChild;
+  if (topEl) {
+    if (perfect) {
+      topEl.classList.add('perfect-glow');
+      spawnScoreFloat('⭐ परफेक्ट!', newX + newWidth / 2, getBlockTop(stack.length - 1));
+      speakHindi('परफेक्ट!');
+    } else {
+      topEl.classList.add('block-land');
+      speakHindi('शाबाश!');
+    }
+    topEl.addEventListener('animationend',
+      () => topEl.classList.remove('block-land', 'perfect-glow'), { once: true });
+  }
+
+  if (blocksPlaced >= WIN_BLOCKS) {
+    document.getElementById('moving-block').style.display = 'none';
+    setTimeout(finishGame, 500);
+    return;
+  }
+
+  setTimeout(startMovingBlock, 340);
+}
+
+// ─── Game Over ────────────────────────────────────────────────────────────────
+function finalizeGame(isMiss) {
+  gameActive = false;
+  gameEnded  = true;
+  document.getElementById('moving-block').style.display = 'none';
+
+  const banner = document.getElementById('game-over-banner');
+  const placed = blocksPlaced;
+  banner.innerHTML =
+    `💥 टावर गिरा! Tower Fell!<br>
+     <small style="font-size:0.68em;color:#ddd">
+       ${placed} ब्लॉक / block${placed !== 1 ? 's' : ''} placed
+     </small>`;
+  banner.classList.add('show');
+
+  if (isMiss) speakHindi('टावर गिर गया! फिर से कोशिश करो!');
+  setTimeout(finishGame, 2000);
+}
+
+// ─── Finish / Completion ──────────────────────────────────────────────────────
+function calcTowerStars() {
+  if (blocksPlaced >= WIN_BLOCKS) return 3;
+  if (blocksPlaced >= 7)          return 2;
+  return 1;
+}
+
+function finishGame() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  const stars = calcTowerStars();
+  saveBestScore('tower-build', stars);
+  const best  = getBestScore('tower-build');
+
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('completion-screen').classList.add('show');
+  document.getElementById('completion-stars').textContent = starsHTML(stars);
+
+  let msg;
+  if (stars === 3)      { msg = '🎊 शानदार! Excellent!';    speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!'); }
+  else if (stars === 2) { msg = '👏 बहुत अच्छा! Very Good!'; speakHindi('बहुत अच्छा! तुमने दो सितारे कमाए!'); }
+  else                  { msg = '💪 अच्छा प्रयास! Good Try!'; speakHindi('अच्छा प्रयास! एक सितारा!'); }
+
+  document.getElementById('completion-title').textContent = msg;
+  document.getElementById('completion-score').textContent =
+    `ब्लॉक / Blocks placed: ${blocksPlaced} / ${WIN_BLOCKS}`;
+  document.getElementById('completion-best').textContent  = 'Best: ' + starsHTML(best);
+  launchConfetti();
+}
+
+function restartGame() {
+  if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+  stack        = [];
+  blocksPlaced = 0;
+  gameActive   = false;
+  gameEnded    = false;
+  dropping     = false;
+
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  document.getElementById('game-over-banner').classList.remove('show');
+  document.getElementById('tower-stack').innerHTML = '';
+  document.getElementById('moving-block').style.display = 'none';
+  document.getElementById('blocks-placed').textContent  = '0';
+  document.getElementById('score-display').textContent  = '0/10';
+  document.getElementById('speed-display').textContent  = '1';
+  document.getElementById('guide-arrow').style.display  = 'block';
+  updateProgress(0, WIN_BLOCKS);
+  hideFeedback();
+
+  GAME_W = document.getElementById('game-canvas').clientWidth;
+  startMovingBlock();
+  speakHindi('ब्लॉक रखो! टावर बनाओ!');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('game-canvas');
+    GAME_W = canvas.clientWidth;
+    GAME_H = canvas.clientHeight;
+
+    // Tap / click on canvas to drop
+    canvas.addEventListener('click', handleDrop);
+    canvas.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      handleDrop();
+    }, { passive: false });
+
+    startMovingBlock();
+    speakHindi('ब्लॉक रखो! टावर बनाओ!');
+  });
+});
+
+window.addEventListener('resize', () => {
+  if (!gameEnded) {
+    const canvas = document.getElementById('game-canvas');
+    GAME_W = canvas.clientWidth;
+    GAME_H = canvas.clientHeight;
+  }
+});
+</script>
+</body>
+</html>
