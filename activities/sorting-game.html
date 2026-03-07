@@ -158,7 +158,7 @@
 
 <div id="game-area">
   <div class="question-area">
-    <p class="question-text" id="question-text">सही टोकरी में डालो!</p>
+    <p class="question-text" id="sort-question">Sort into the right basket!</p>
     <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
@@ -206,71 +206,71 @@
 <script>
 const ROUND_TYPES = [
   {
-    titleHi: '🍎 फल vs 🥕 सब्ज़ी',
-    catA: {label:'Fruits · फल',  emoji:'🍎'},
-    catB: {label:'Veggies · सब्ज़ी', emoji:'🥕'},
+    title: {en: '🍎 Fruits vs 🥕 Veggies', hi: '🍎 फल vs 🥕 सब्ज़ी', gu: '🍎 ફળ vs 🥕 શાકભાજી'},
+    catA: {en:'Fruits',  hi:'फल',     gu:'ફળ',     emoji:'🍎'},
+    catB: {en:'Veggies', hi:'सब्ज़ी',  gu:'શાકભાજી', emoji:'🥕'},
     items: [
-      {emoji:'🥭',hi:'आम',       cat:'a'},
-      {emoji:'🍌',hi:'केला',     cat:'a'},
-      {emoji:'🍎',hi:'सेब',      cat:'a'},
-      {emoji:'🍊',hi:'संतरा',    cat:'a'},
-      {emoji:'🥥',hi:'नारियल',   cat:'a'},
-      {emoji:'🥕',hi:'गाजर',     cat:'b'},
-      {emoji:'🥔',hi:'आलू',      cat:'b'},
-      {emoji:'🍆',hi:'बैंगन',    cat:'b'},
-      {emoji:'🌽',hi:'मकई',      cat:'b'},
-      {emoji:'🧅',hi:'प्याज',    cat:'b'},
+      {emoji:'🥭',en:'Mango',hi:'आम',gu:'કેરી',cat:'a'},
+      {emoji:'🍌',en:'Banana',hi:'केला',gu:'કેળું',cat:'a'},
+      {emoji:'🍎',en:'Apple',hi:'सेब',gu:'સફરજન',cat:'a'},
+      {emoji:'🍊',en:'Orange',hi:'संतरा',gu:'નારંગી',cat:'a'},
+      {emoji:'🥥',en:'Coconut',hi:'नारियल',gu:'નાળિયેર',cat:'a'},
+      {emoji:'🥕',en:'Carrot',hi:'गाजर',gu:'ગાજર',cat:'b'},
+      {emoji:'🥔',en:'Potato',hi:'आलू',gu:'બટાકા',cat:'b'},
+      {emoji:'🍆',en:'Brinjal',hi:'बैंगन',gu:'રીંગણ',cat:'b'},
+      {emoji:'🌽',en:'Corn',hi:'मकई',gu:'મકાઈ',cat:'b'},
+      {emoji:'🧅',en:'Onion',hi:'प्याज',gu:'ડુંગળી',cat:'b'},
     ]
   },
   {
-    titleHi: '🐾 जानवर vs 🚗 वाहन',
-    catA: {label:'Animals · जानवर', emoji:'🐾'},
-    catB: {label:'Vehicles · वाहन', emoji:'🚗'},
+    title: {en: '🐾 Animals vs 🚗 Vehicles', hi: '🐾 जानवर vs 🚗 वाहन', gu: '🐾 પ્રાણી vs 🚗 વાહન'},
+    catA: {en:'Animals', hi:'जानवर',  gu:'પ્રાણી',  emoji:'🐾'},
+    catB: {en:'Vehicles',hi:'वाहन',   gu:'વાહન',    emoji:'🚗'},
     items: [
-      {emoji:'🐄',hi:'गाय',     cat:'a'},
-      {emoji:'🐘',hi:'हाथी',    cat:'a'},
-      {emoji:'🦚',hi:'मोर',     cat:'a'},
-      {emoji:'🐯',hi:'बाघ',     cat:'a'},
-      {emoji:'🐕',hi:'कुत्ता',  cat:'a'},
-      {emoji:'🚗',hi:'कार',      cat:'b'},
-      {emoji:'🚌',hi:'बस',       cat:'b'},
-      {emoji:'✈️',hi:'हवाई जहाज',cat:'b'},
-      {emoji:'🚂',hi:'ट्रेन',    cat:'b'},
-      {emoji:'🚲',hi:'साइकिल',   cat:'b'},
+      {emoji:'🐄',en:'Cow',hi:'गाय',gu:'ગાય',cat:'a'},
+      {emoji:'🐘',en:'Elephant',hi:'हाथी',gu:'હાથી',cat:'a'},
+      {emoji:'🦚',en:'Peacock',hi:'मोर',gu:'મોર',cat:'a'},
+      {emoji:'🐯',en:'Tiger',hi:'बाघ',gu:'વાઘ',cat:'a'},
+      {emoji:'🐕',en:'Dog',hi:'कुत्ता',gu:'કૂતરો',cat:'a'},
+      {emoji:'🚗',en:'Car',hi:'कार',gu:'કાર',cat:'b'},
+      {emoji:'🚌',en:'Bus',hi:'बस',gu:'બસ',cat:'b'},
+      {emoji:'✈️',en:'Aeroplane',hi:'हवाई जहाज',gu:'વિમાન',cat:'b'},
+      {emoji:'🚂',en:'Train',hi:'ट्रेन',gu:'ટ્રેન',cat:'b'},
+      {emoji:'🚲',en:'Bicycle',hi:'साइकिल',gu:'સાઇકલ',cat:'b'},
     ]
   },
   {
-    titleHi: '✈️ उड़ने वाले vs 🐟 पानी वाले',
-    catA: {label:'Flies · उड़ता है', emoji:'✈️'},
-    catB: {label:'Swims · पानी में', emoji:'🐟'},
+    title: {en: '✈️ Flies vs 🐟 Swims', hi: '✈️ उड़ने वाले vs 🐟 पानी वाले', gu: '✈️ ઉડે vs 🐟 તરે'},
+    catA: {en:'Flies',  hi:'उड़ता है', gu:'ઉડે છે',  emoji:'✈️'},
+    catB: {en:'Swims',  hi:'पानी में', gu:'તરે છે',  emoji:'🐟'},
     items: [
-      {emoji:'✈️',hi:'हवाई जहाज', cat:'a'},
-      {emoji:'🦅',hi:'चील',        cat:'a'},
-      {emoji:'🦋',hi:'तितली',       cat:'a'},
-      {emoji:'🦜',hi:'तोता',        cat:'a'},
-      {emoji:'🚁',hi:'हेलीकॉप्टर', cat:'a'},
-      {emoji:'🐟',hi:'मछली',        cat:'b'},
-      {emoji:'🐬',hi:'डॉल्फिन',    cat:'b'},
-      {emoji:'🦈',hi:'शार्क',       cat:'b'},
-      {emoji:'🐊',hi:'मगरमच्छ',    cat:'b'},
-      {emoji:'🐸',hi:'मेंढक',       cat:'b'},
+      {emoji:'✈️',en:'Aeroplane',hi:'हवाई जहाज',gu:'વિમાન',cat:'a'},
+      {emoji:'🦅',en:'Eagle',hi:'चील',gu:'ગરુડ',cat:'a'},
+      {emoji:'🦋',en:'Butterfly',hi:'तितली',gu:'પતંગિયું',cat:'a'},
+      {emoji:'🦜',en:'Parrot',hi:'तोता',gu:'પોપટ',cat:'a'},
+      {emoji:'🚁',en:'Helicopter',hi:'हेलीकॉप्टर',gu:'હેલિકૉપ્ટર',cat:'a'},
+      {emoji:'🐟',en:'Fish',hi:'मछली',gu:'માછલી',cat:'b'},
+      {emoji:'🐬',en:'Dolphin',hi:'डॉल्फिन',gu:'ડોલ્ફિન',cat:'b'},
+      {emoji:'🦈',en:'Shark',hi:'शार्क',gu:'શાર્ક',cat:'b'},
+      {emoji:'🐊',en:'Crocodile',hi:'मगरमच्छ',gu:'મગર',cat:'b'},
+      {emoji:'🐸',en:'Frog',hi:'मेंढक',gu:'દેડકો',cat:'b'},
     ]
   },
   {
-    titleHi: '🔴 लाल vs 🔵 नीला',
-    catA: {label:'Red · लाल',  emoji:'🔴'},
-    catB: {label:'Blue · नीला', emoji:'🔵'},
+    title: {en: '🔴 Red vs 🔵 Blue', hi: '🔴 लाल vs 🔵 नीला', gu: '🔴 લાલ vs 🔵 વાદળી'},
+    catA: {en:'Red',  hi:'लाल',  gu:'લાલ',    emoji:'🔴'},
+    catB: {en:'Blue', hi:'नीला', gu:'વાદળી',  emoji:'🔵'},
     items: [
-      {emoji:'🍎',hi:'लाल सेब',  cat:'a'},
-      {emoji:'🌹',hi:'लाल गुलाब',cat:'a'},
-      {emoji:'🍅',hi:'टमाटर',    cat:'a'},
-      {emoji:'🌶️',hi:'लाल मिर्च',cat:'a'},
-      {emoji:'🎈',hi:'लाल गुब्बारा',cat:'a'},
-      {emoji:'🫐',hi:'ब्लूबेरी', cat:'b'},
-      {emoji:'💧',hi:'पानी',      cat:'b'},
-      {emoji:'🌊',hi:'समुद्र',    cat:'b'},
-      {emoji:'🔷',hi:'नीला हीरा',  cat:'b'},
-      {emoji:'🫙',hi:'नीला जार',   cat:'b'},
+      {emoji:'🍎',en:'Red Apple',hi:'लाल सेब',gu:'લાલ સફરજન',cat:'a'},
+      {emoji:'🌹',en:'Red Rose',hi:'लाल गुलाब',gu:'લાલ ગુલાબ',cat:'a'},
+      {emoji:'🍅',en:'Tomato',hi:'टमाटर',gu:'ટમેટા',cat:'a'},
+      {emoji:'🌶️',en:'Red Chilli',hi:'लाल मिर्च',gu:'લાલ મરચું',cat:'a'},
+      {emoji:'🎈',en:'Red Balloon',hi:'लाल गुब्बारा',gu:'લાલ ફૂગ્ગો',cat:'a'},
+      {emoji:'🫐',en:'Blueberry',hi:'ब्लूबेरी',gu:'બ્લૂબેરી',cat:'b'},
+      {emoji:'💧',en:'Water',hi:'पानी',gu:'પાણી',cat:'b'},
+      {emoji:'🌊',en:'Ocean',hi:'समुद्र',gu:'સમુદ્ર',cat:'b'},
+      {emoji:'🔷',en:'Blue Diamond',hi:'नीला हीरा',gu:'વાદળી હીરો',cat:'b'},
+      {emoji:'🫙',en:'Blue Jar',hi:'नीला जार',gu:'વાદળી બરણી',cat:'b'},
     ]
   },
 ];
@@ -285,11 +285,34 @@ let mistakes = 0;
 let totalAnswered = 0;
 let totalItems = 0;
 let isAnimating = false;
-let currentPrompt = 'सही टोकरी में डालो!';
+
+function getPrompt() {
+  return t({en: 'Sort into the right basket!', hi: 'सही टोकरी में डालो!', gu: 'સાચી ટોપલીમાં નાખો!'});
+}
 
 function hearAgain() {
   const itemEl = document.getElementById('current-item');
-  if (itemEl) speakHindi(itemEl.dataset.hi || currentPrompt);
+  if (itemEl && itemEl.dataset.en) {
+    speak({en: itemEl.dataset.en, hi: itemEl.dataset.hi, gu: itemEl.dataset.gu || itemEl.dataset.en});
+  } else {
+    speak({en: 'Sort into the right basket!', hi: 'सही टोकरी में डालो!', gu: 'સાચી ટોપલીમાં નાખો!'});
+  }
+}
+
+function onLanguageChange() {
+  document.getElementById('sort-question').textContent = getPrompt();
+  // Update basket labels and round title
+  const rt = ROUND_TYPES[roundIdx];
+  if (rt) {
+    document.getElementById('round-title').textContent = t(rt.title);
+    document.getElementById('basket-a-label').textContent = t(rt.catA);
+    document.getElementById('basket-b-label').textContent = t(rt.catB);
+  }
+  // Re-speak current item
+  const itemEl = document.getElementById('current-item');
+  if (itemEl && itemEl.dataset.en) {
+    speak({en: itemEl.dataset.en, hi: itemEl.dataset.hi, gu: itemEl.dataset.gu || itemEl.dataset.en});
+  }
 }
 
 function initGame() {
@@ -311,11 +334,12 @@ function loadRound(idx) {
   itemPos = 0;
   isAnimating = false;
 
-  document.getElementById('round-title').textContent = rt.titleHi;
+  document.getElementById('round-title').textContent = t(rt.title);
   document.getElementById('basket-a-emoji').textContent = rt.catA.emoji;
-  document.getElementById('basket-a-label').textContent = rt.catA.label.replace('·','\n');
+  document.getElementById('basket-a-label').textContent = t(rt.catA);
   document.getElementById('basket-b-emoji').textContent = rt.catB.emoji;
-  document.getElementById('basket-b-label').textContent = rt.catB.label.replace('·','\n');
+  document.getElementById('basket-b-label').textContent = t(rt.catB);
+  document.getElementById('sort-question').textContent = getPrompt();
 
   totalItems = itemQueue.length;
   updateSortProgress(0, totalItems);
@@ -324,7 +348,6 @@ function loadRound(idx) {
 
 function showNextItem() {
   if (itemPos >= itemQueue.length) {
-    // Finished this round → next
     roundIdx++;
     if (roundIdx < TOTAL_ROUNDS) {
       setTimeout(() => loadRound(roundIdx), 700);
@@ -336,12 +359,14 @@ function showNextItem() {
   const item = itemQueue[itemPos];
   const el = document.getElementById('current-item');
   el.textContent = item.emoji;
+  el.dataset.en  = item.en;
   el.dataset.hi  = item.hi;
+  el.dataset.gu  = item.gu || item.en;
   el.dataset.cat = item.cat;
   el.className = 'sort-item-card bounce-in';
   void el.offsetWidth;
 
-  speakHindi(item.hi);
+  speak({en: item.en, hi: item.hi, gu: item.gu || item.en});
 }
 
 function handleBasket(side) {
@@ -350,14 +375,13 @@ function handleBasket(side) {
   const correct = el.dataset.cat;
 
   if (side === correct) {
-    // Correct!
     isAnimating = true;
     el.className = 'sort-item-card fly-correct';
     const basketEl = document.getElementById('basket-' + side);
     basketEl.classList.add('correct-flash');
     setTimeout(() => basketEl.classList.remove('correct-flash'), 500);
     showFeedback(true);
-    speakHindi('सही!');
+    speak({en: 'Correct!', hi: 'सही!', gu: 'સાચું!'});
     totalAnswered++;
     itemPos++;
     updateSortProgress(itemPos, totalItems);
@@ -369,7 +393,6 @@ function handleBasket(side) {
       showNextItem();
     }, 650);
   } else {
-    // Wrong
     mistakes++;
     el.className = 'sort-item-card bounce-back';
     const basketEl = document.getElementById('basket-' + side);
@@ -393,7 +416,7 @@ function finishGame() {
   showCompletion('sorting-game', mistakes, totalDone);
 }
 
-document.addEventListener('DOMContentLoaded', initGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); initGame(); });
 </script>
 </body>
 </html>

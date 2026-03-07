@@ -124,7 +124,7 @@
 
 <div id="game-area">
   <div class="question-area">
-    <p class="question-text">जोड़ी ढूंढो! Find the pairs!</p>
+    <p class="question-text" id="memory-question">Find the pairs!</p>
     <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
   </div>
 
@@ -158,18 +158,18 @@
 <script src="../js/common.js"></script>
 <script>
 const EMOJI_DATA = [
-  {emoji:'🥭', hi:'आम'},
-  {emoji:'🥥', hi:'नारियल'},
-  {emoji:'🪔', hi:'दिया'},
-  {emoji:'🦚', hi:'मोर'},
-  {emoji:'🐘', hi:'हाथी'},
-  {emoji:'🌺', hi:'फूल'},
-  {emoji:'🏏', hi:'क्रिकेट'},
-  {emoji:'🪷', hi:'कमल'},
-  {emoji:'🐯', hi:'बाघ'},
-  {emoji:'🌸', hi:'चेरी फूल'},
-  {emoji:'🎊', hi:'पटाखा'},
-  {emoji:'🦜', hi:'तोता'},
+  {emoji:'🥭', en:'Mango',       hi:'आम',        gu:'કેરી'},
+  {emoji:'🥥', en:'Coconut',     hi:'नारियल',    gu:'નાળિયેર'},
+  {emoji:'🪔', en:'Diya',        hi:'दिया',       gu:'દીવો'},
+  {emoji:'🦚', en:'Peacock',     hi:'मोर',        gu:'મોર'},
+  {emoji:'🐘', en:'Elephant',    hi:'हाथी',       gu:'હાથી'},
+  {emoji:'🌺', en:'Flower',      hi:'फूल',        gu:'ફૂલ'},
+  {emoji:'🏏', en:'Cricket',     hi:'क्रिकेट',    gu:'ક્રિકેટ'},
+  {emoji:'🪷', en:'Lotus',       hi:'कमल',        gu:'કમળ'},
+  {emoji:'🐯', en:'Tiger',       hi:'बाघ',        gu:'વાઘ'},
+  {emoji:'🌸', en:'Cherry Blossom',hi:'चेरी फूल', gu:'ચેરી ફૂલ'},
+  {emoji:'🎊', en:'Cracker',     hi:'पटाखा',      gu:'ફટાકડો'},
+  {emoji:'🦜', en:'Parrot',      hi:'तोता',       gu:'પોપટ'},
 ];
 
 const DIFFICULTY = {
@@ -186,9 +186,19 @@ let moves = 0;
 let canFlip = true;
 let timerInterval = null;
 let timerSeconds = 0;
-const currentPrompt = 'जोड़ी ढूंढो!';
 
-function hearAgain() { speakHindi(currentPrompt); }
+function getPrompt() {
+  return t({en: 'Find the pairs!', hi: 'जोड़ी ढूंढो!', gu: 'જોડી શોધો!'});
+}
+
+function hearAgain() {
+  speak({en: 'Find the pairs!', hi: 'जोड़ी ढूंढो!', gu: 'જોડી શોધો!'});
+}
+
+function onLanguageChange() {
+  document.getElementById('memory-question').textContent = getPrompt();
+  speak({en: 'Find the pairs!', hi: 'जोड़ी ढूंढो!', gu: 'જોડી શોધો!'});
+}
 
 function setDifficulty(level, btn) {
   currentDifficulty = level;
@@ -215,6 +225,7 @@ function restartGame() {
   document.getElementById('moves-count').textContent = '0';
   document.getElementById('timer-display').textContent = '0:00';
   updateProgress(0, cfg.pairs);
+  document.getElementById('memory-question').textContent = getPrompt();
 
   const grid = document.getElementById('card-grid');
   grid.className = 'card-grid ' + (cfg.cols === 3 ? 'grid-3' : 'grid-4');
@@ -233,7 +244,6 @@ function restartGame() {
     grid.appendChild(outer);
   });
 
-  // Start timer
   timerInterval = setInterval(() => {
     timerSeconds++;
     const m = Math.floor(timerSeconds / 60);
@@ -242,7 +252,7 @@ function restartGame() {
       m + ':' + String(s).padStart(2,'0');
   }, 1000);
 
-  speakHindi(currentPrompt);
+  speak({en: 'Find the pairs!', hi: 'जोड़ी ढूंढो!', gu: 'જોડી શોધો!'});
 }
 
 function handleCardClick(idx) {
@@ -252,7 +262,7 @@ function handleCardClick(idx) {
   if (!el || el.classList.contains('flipped') || el.classList.contains('matched')) return;
 
   el.classList.add('flipped');
-  speakHindi(card.hi);
+  speak({en: card.en, hi: card.hi, gu: card.gu});
   flipped.push(idx);
 
   if (flipped.length === 2) {
@@ -261,7 +271,6 @@ function handleCardClick(idx) {
     document.getElementById('moves-count').textContent = moves;
     const [a, b] = flipped;
     if (cards[a].emoji === cards[b].emoji) {
-      // Match!
       matched++;
       document.getElementById('pairs-count').textContent = matched;
       const cfg = DIFFICULTY[currentDifficulty];
@@ -270,7 +279,7 @@ function handleCardClick(idx) {
         document.querySelectorAll(`.mem-card[data-idx="${a}"], .mem-card[data-idx="${b}"]`)
           .forEach(e => e.classList.add('matched'));
         showFeedback(true);
-        speakHindi('जोड़ी मिल गई!');
+        speak({en: 'Pair found!', hi: 'जोड़ी मिल गई!', gu: 'જોડી મળી ગઈ!'});
         flipped = [];
         canFlip = true;
         if (matched >= cfg.pairs) {
@@ -279,7 +288,6 @@ function handleCardClick(idx) {
         }
       }, 400);
     } else {
-      // No match
       setTimeout(() => {
         const elA = document.querySelector(`.mem-card[data-idx="${a}"]`);
         const elB = document.querySelector(`.mem-card[data-idx="${b}"]`);
@@ -315,21 +323,24 @@ function finishGame() {
 
   document.getElementById('completion-stars').textContent = starsHTML(stars);
   let msg;
-  if (stars === 3)      msg = '🎊 शानदार! Excellent!';
-  else if (stars === 2) msg = '👏 बहुत अच्छा! Very Good!';
-  else                  msg = '💪 अच्छा प्रयास! Good Try!';
+  if (stars === 3)      msg = '🎊 ' + t({en: 'Excellent!', hi: 'शानदार!', gu: 'ખૂબ સરસ!'});
+  else if (stars === 2) msg = '👏 ' + t({en: 'Very Good!', hi: 'बहुत अच्छा!', gu: 'ખૂબ સારું!'});
+  else                  msg = '💪 ' + t({en: 'Good Try!', hi: 'अच्छा प्रयास!', gu: 'સારો પ્રયત્ન!'});
   document.getElementById('completion-title').textContent = msg;
   document.getElementById('completion-score').textContent =
     `Moves: ${moves} | Time: ${document.getElementById('timer-display').textContent}`;
   document.getElementById('completion-best').textContent = 'Best: ' + starsHTML(best);
   launchConfetti();
 
-  if (stars === 3)      speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!');
-  else if (stars === 2) speakHindi('बहुत अच्छा! तुमने दो सितारे कमाए!');
-  else                  speakHindi('अच्छा प्रयास! एक सितारा!');
+  if (stars === 3)
+    speak({en: 'Excellent! You earned 3 stars!', hi: 'बहुत अच्छा! तुमने तीन सितारे कमाए!', gu: 'ખૂબ સરસ! તમે 3 સ્ટાર મેળવ્યા!'});
+  else if (stars === 2)
+    speak({en: 'Very good! You earned 2 stars!', hi: 'बहुत अच्छा! तुमने दो सितारे कमाए!', gu: 'ખૂબ સારું! તમે 2 સ્ટાર મેળવ્યા!'});
+  else
+    speak({en: 'Good try! You earned 1 star!', hi: 'अच्छा प्रयास! एक सितारा!', gu: 'સારો પ્રયત્ન! 1 સ્ટાર!'});
 }
 
-document.addEventListener('DOMContentLoaded', restartGame);
+document.addEventListener('DOMContentLoaded', () => { injectLanguageSelector(); restartGame(); });
 </script>
 </body>
 </html>
