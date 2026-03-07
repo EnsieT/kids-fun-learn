@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color by Number | रंग भरो</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    .pattern-selector {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    .pattern-btn {
+      padding: 8px 16px;
+      border-radius: 50px;
+      border: 3px solid #E0E0E0;
+      background: white;
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      min-height: 44px;
+      font-family: var(--font-main);
+    }
+    .pattern-btn.active {
+      background: var(--saffron);
+      border-color: var(--deep-saffron);
+      color: white;
+    }
+    .color-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+      margin: 12px 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 50px;
+      border: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .legend-item.selected-color {
+      border-color: var(--saffron);
+      background: #FFF3E0;
+    }
+    .legend-swatch {
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid rgba(0,0,0,0.2);
+      flex-shrink: 0;
+    }
+    .color-grid-container {
+      overflow-x: auto;
+      padding: 8px 0;
+    }
+    .color-grid {
+      display: grid;
+      gap: 2px;
+      margin: 0 auto;
+      width: fit-content;
+    }
+    .color-cell {
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid rgba(0,0,0,0.2);
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.1s;
+      user-select: none;
+      background: #F5F5F5;
+      color: #666;
+    }
+    .color-cell:hover { transform: scale(1.1); }
+    .color-cell.empty { cursor: default; background: transparent; border-color: transparent; }
+    .action-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+    .selected-color-indicator {
+      text-align: center;
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-medium);
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠</a>
+    <h1>🎨 रंग भरो<br><small style="font-size:0.8em">Color by Number</small></h1>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="container">
+
+    <div class="card">
+      <!-- Pattern selector -->
+      <p style="font-size:1rem;font-weight:700;text-align:center;margin-bottom:10px">Choose Pattern / पैटर्न चुनें:</p>
+      <div class="pattern-selector" id="patternSelector"></div>
+
+      <!-- Color legend -->
+      <p style="font-size:0.9rem;font-weight:700;text-align:center;color:var(--text-medium);margin-bottom:6px">Tap a color, then tap the cells:</p>
+      <div class="color-legend" id="colorLegend"></div>
+      <div class="selected-color-indicator" id="selectedColorIndicator">Selected: — tap a color above</div>
+
+      <!-- Grid -->
+      <div class="color-grid-container">
+        <div class="color-grid" id="colorGrid"></div>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row">
+        <button class="btn btn-secondary" id="resetBtn">🔄 Reset</button>
+        <button class="btn btn-success" id="checkBtn">✅ Check!</button>
+      </div>
+
+      <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const ACTIVITY_ID = 'color-by-number';
+
+    // Colors: index 1-5
+    const COLORS = [
+      { num: 1, name: 'Red / लाल',    hex: '#F44336' },
+      { num: 2, name: 'Blue / नीला',   hex: '#2196F3' },
+      { num: 3, name: 'Green / हरा',   hex: '#4CAF50' },
+      { num: 4, name: 'Yellow / पीला', hex: '#FDD835' },
+      { num: 5, name: 'Orange / नारंगी', hex: '#FF9800' },
+      { num: 6, name: 'Pink / गुलाबी',  hex: '#E91E8C' },
+      { num: 7, name: 'Purple / बैंगनी', hex: '#9C27B0' },
+    ];
+
+    // Patterns: each cell value = color num (0 = empty/skip)
+    // Using a flat row-major array and a cols count
+    const PATTERNS = [
+      {
+        name: '🪔 Diya',
+        cols: 9,
+        // 9 wide, row by row
+        grid: [
+          0, 0, 0, 0, 4, 0, 0, 0, 0,
+          0, 0, 0, 4, 4, 4, 0, 0, 0,
+          0, 0, 4, 5, 5, 5, 4, 0, 0,
+          0, 4, 5, 5, 1, 5, 5, 4, 0,
+          0, 4, 5, 1, 1, 1, 5, 4, 0,
+          0, 0, 3, 3, 3, 3, 3, 0, 0,
+          0, 3, 3, 3, 3, 3, 3, 3, 0,
+          3, 3, 3, 3, 3, 3, 3, 3, 3,
+        ]
+      },
+      {
+        name: '🌸 Flower',
+        cols: 9,
+        grid: [
+          0, 0, 0, 0, 6, 0, 0, 0, 0,
+          0, 0, 6, 6, 4, 6, 6, 0, 0,
+          0, 6, 6, 3, 3, 3, 6, 6, 0,
+          0, 6, 3, 3, 4, 3, 3, 6, 0,
+          6, 4, 3, 4, 4, 4, 3, 4, 6,
+          0, 6, 3, 3, 4, 3, 3, 6, 0,
+          0, 6, 6, 3, 3, 3, 6, 6, 0,
+          0, 0, 6, 6, 4, 6, 6, 0, 0,
+          0, 0, 0, 0, 6, 0, 0, 0, 0,
+        ]
+      },
+      {
+        name: '🦚 Peacock',
+        cols: 9,
+        grid: [
+          0, 0, 0, 2, 2, 2, 0, 0, 0,
+          0, 0, 2, 3, 3, 3, 2, 0, 0,
+          0, 2, 3, 2, 3, 2, 3, 2, 0,
+          0, 0, 2, 3, 7, 3, 2, 0, 0,
+          0, 0, 0, 3, 3, 3, 0, 0, 0,
+          0, 0, 0, 0, 3, 0, 0, 0, 0,
+          0, 0, 0, 2, 3, 2, 0, 0, 0,
+          0, 0, 2, 2, 3, 2, 2, 0, 0,
+          0, 0, 0, 0, 1, 0, 0, 0, 0,
+        ]
+      },
+      {
+        name: '🏠 House',
+        cols: 9,
+        grid: [
+          0, 0, 0, 0, 1, 0, 0, 0, 0,
+          0, 0, 0, 1, 1, 1, 0, 0, 0,
+          0, 0, 1, 1, 1, 1, 1, 0, 0,
+          0, 1, 1, 1, 1, 1, 1, 1, 0,
+          0, 5, 5, 5, 5, 5, 5, 5, 0,
+          0, 5, 5, 2, 5, 2, 5, 5, 0,
+          0, 5, 5, 2, 5, 2, 5, 5, 0,
+          0, 5, 5, 5, 3, 5, 5, 5, 0,
+          0, 5, 5, 5, 3, 5, 5, 5, 0,
+        ]
+      },
+    ];
+
+    let selectedPattern = 0;
+    let selectedColorNum = null;
+    let userGrid = [];
+
+    function getColorByNum(num) {
+      return COLORS.find(c => c.num === num) || null;
+    }
+
+    function initPatternSelector() {
+      const sel = document.getElementById('patternSelector');
+      sel.innerHTML = '';
+      PATTERNS.forEach((p, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'pattern-btn' + (i === 0 ? ' active' : '');
+        btn.textContent = p.name;
+        btn.addEventListener('click', () => selectPattern(i, btn));
+        sel.appendChild(btn);
+      });
+    }
+
+    function selectPattern(idx, btn) {
+      document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedPattern = idx;
+      selectedColorNum = null;
+      updateSelectedIndicator();
+      renderGrid();
+    }
+
+    function initColorLegend() {
+      const legend = document.getElementById('colorLegend');
+      legend.innerHTML = '';
+      // Only show colors used in current pattern
+      const usedNums = new Set(PATTERNS[selectedPattern].grid.filter(n => n > 0));
+      COLORS.filter(c => usedNums.has(c.num)).forEach(color => {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.dataset.num = color.num;
+        item.innerHTML = `<div class="legend-swatch" style="background:${color.hex}"></div>${color.name}`;
+        item.addEventListener('click', () => selectColor(color.num, item));
+        legend.appendChild(item);
+      });
+    }
+
+    function selectColor(num, el) {
+      document.querySelectorAll('.legend-item').forEach(i => i.classList.remove('selected-color'));
+      el.classList.add('selected-color');
+      selectedColorNum = num;
+      updateSelectedIndicator();
+    }
+
+    function updateSelectedIndicator() {
+      const ind = document.getElementById('selectedColorIndicator');
+      if (selectedColorNum) {
+        const color = getColorByNum(selectedColorNum);
+        ind.innerHTML = `Selected: <span style="color:${color.hex};font-weight:800">${color.name}</span>`;
+      } else {
+        ind.textContent = 'Selected: — tap a color above';
+      }
+    }
+
+    function renderGrid() {
+      const pattern = PATTERNS[selectedPattern];
+      const cols = pattern.cols;
+      const rows = Math.ceil(pattern.grid.length / cols);
+
+      // Reset user grid
+      userGrid = pattern.grid.map(n => (n === 0 ? 0 : null)); // null = not yet colored
+
+      initColorLegend();
+      updateSelectedIndicator();
+
+      const grid = document.getElementById('colorGrid');
+      grid.style.gridTemplateColumns = `repeat(${cols}, 40px)`;
+      grid.innerHTML = '';
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+
+      pattern.grid.forEach((num, idx) => {
+        const cell = document.createElement('div');
+        if (num === 0) {
+          cell.className = 'color-cell empty';
+        } else {
+          cell.className = 'color-cell';
+          cell.textContent = num;
+          cell.dataset.idx = idx;
+          cell.dataset.num = num;
+          cell.addEventListener('click', () => paintCell(idx, cell));
+        }
+        grid.appendChild(cell);
+      });
+    }
+
+    function paintCell(idx, cell) {
+      if (selectedColorNum === null) {
+        document.getElementById('feedbackMsg').className = 'feedback-msg wrong';
+        document.getElementById('feedbackMsg').textContent = '👆 पहले रंग चुनें! Pick a color first!';
+        return;
+      }
+      userGrid[idx] = selectedColorNum;
+      const color = getColorByNum(selectedColorNum);
+      cell.style.background = color.hex;
+      cell.style.color = 'rgba(0,0,0,0.4)';
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      selectedColorNum = null;
+      renderGrid();
+    });
+
+    document.getElementById('checkBtn').addEventListener('click', checkAnswer);
+
+    function checkAnswer() {
+      const pattern = PATTERNS[selectedPattern];
+      let correct = 0;
+      let total = 0;
+      let allFilled = true;
+
+      pattern.grid.forEach((num, idx) => {
+        if (num === 0) return;
+        total++;
+        if (userGrid[idx] === null) { allFilled = false; return; }
+        if (userGrid[idx] === num) correct++;
+      });
+
+      if (!allFilled) {
+        document.getElementById('feedbackMsg').className = 'feedback-msg wrong';
+        document.getElementById('feedbackMsg').textContent = '❌ सभी सेल रंगो! Color all cells first!';
+        return;
+      }
+
+      const pct = correct / total;
+      const fb = document.getElementById('feedbackMsg');
+      if (pct === 1) {
+        fb.className = 'feedback-msg correct';
+        fb.textContent = '🎉 वाह! Perfect! सभी रंग सही हैं!';
+        launchConfetti();
+        saveActivityStars(ACTIVITY_ID, 3);
+      } else if (pct >= 0.7) {
+        fb.className = 'feedback-msg correct';
+        fb.textContent = `✅ बहुत अच्छे! ${correct}/${total} correct!`;
+        saveActivityStars(ACTIVITY_ID, 2);
+      } else {
+        fb.className = 'feedback-msg wrong';
+        fb.textContent = `❌ ${correct}/${total} correct. फिर से कोशिश करो!`;
+      }
+    }
+
+    // Init
+    initPatternSelector();
+    renderGrid();
+  </script>
+</body>
+</html>

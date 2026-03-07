@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kids Fun Learn | बच्चों की पाठशाला</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    body { background: var(--bg-warm); }
+    .section-title {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-medium);
+      padding: 16px 16px 4px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .footer {
+      text-align: center;
+      padding: 24px 16px;
+      color: var(--text-medium);
+      font-size: 0.9rem;
+    }
+    .mascot {
+      font-size: 3.5rem;
+      display: block;
+      animation: bounce-in 0.6s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Hero Section -->
+  <div class="hero">
+    <span class="mascot">🦚</span>
+    <h1>Kids Fun Learn<br><span style="font-size:1.4rem">बच्चों की पाठशाला</span></h1>
+    <p class="subtitle">Fun activities for curious minds! 🌟</p>
+    <div class="total-stars">
+      ⭐ Total Stars: <span id="totalStars">0</span>
+    </div>
+  </div>
+
+  <!-- Activities Grid -->
+  <p class="section-title">Choose an Activity / गतिविधि चुनें</p>
+
+  <div class="activity-grid">
+
+    <a href="counting.html" class="activity-card" data-activity="counting">
+      <span class="card-emoji">🔢</span>
+      <span class="card-title">Counting Game</span>
+      <span class="card-hindi">गिनती का खेल</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="fruits-veggies.html" class="activity-card" data-activity="fruits-veggies">
+      <span class="card-emoji">🥭</span>
+      <span class="card-title">Fruits &amp; Veggies</span>
+      <span class="card-hindi">फल और सब्ज़ियाँ</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="animals.html" class="activity-card" data-activity="animals">
+      <span class="card-emoji">🐘</span>
+      <span class="card-title">Animals</span>
+      <span class="card-hindi">जानवर</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="shapes.html" class="activity-card" data-activity="shapes">
+      <span class="card-emoji">🔷</span>
+      <span class="card-title">Shapes</span>
+      <span class="card-hindi">आकृतियाँ</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="color-by-number.html" class="activity-card" data-activity="color-by-number">
+      <span class="card-emoji">🎨</span>
+      <span class="card-title">Color by Number</span>
+      <span class="card-hindi">रंग भरो</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="odd-one-out.html" class="activity-card" data-activity="odd-one-out">
+      <span class="card-emoji">🤔</span>
+      <span class="card-title">Odd One Out</span>
+      <span class="card-hindi">अलग कौन?</span>
+      <span class="card-age">Ages 5-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="patterns.html" class="activity-card" data-activity="patterns">
+      <span class="card-emoji">🔄</span>
+      <span class="card-title">Patterns</span>
+      <span class="card-hindi">पैटर्न</span>
+      <span class="card-age">Ages 5-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+    <a href="math.html" class="activity-card" data-activity="math">
+      <span class="card-emoji">➕</span>
+      <span class="card-title">Simple Math</span>
+      <span class="card-hindi">सरल गणित</span>
+      <span class="card-age">Ages 4-6</span>
+      <span class="card-stars"></span>
+    </a>
+
+  </div>
+
+  <div class="footer">
+    Made with ❤️ for little learners 🇮🇳
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    updateHomepageStars();
+  </script>
+</body>
+</html>

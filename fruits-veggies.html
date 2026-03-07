@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fruits &amp; Veggies | फल और सब्ज़ियाँ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <div class="page-header">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠</a>
+    <h1>🥭 फल और सब्ज़ियाँ<br><small style="font-size:0.8em">Fruits &amp; Veggies</small></h1>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="container">
+
+    <div id="gameScreen">
+      <div class="score-bar">
+        <span class="score-label">Round <span id="roundNum">1</span> / <span id="totalRounds">10</span></span>
+        <div class="progress-dots" id="progressDots"></div>
+        <span class="score-value">⭐ <span id="scoreDisplay">0</span></span>
+      </div>
+
+      <div class="prompt-box" id="promptBox">
+        <p class="prompt-text" id="promptHindi"></p>
+        <p class="prompt-hindi" id="promptEnglish"></p>
+      </div>
+
+      <div class="emoji-grid" id="emojiGrid"></div>
+
+      <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <div id="endScreen" class="hidden"></div>
+
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const ACTIVITY_ID = 'fruits-veggies';
+    const TOTAL_ROUNDS = 10;
+
+    const ITEMS = [
+      { emoji: '🥭', hindi: 'आम', english: 'Mango' },
+      { emoji: '🍌', hindi: 'केला', english: 'Banana' },
+      { emoji: '🍆', hindi: 'बैंगन', english: 'Brinjal' },
+      { emoji: '🍅', hindi: 'टमाटर', english: 'Tomato' },
+      { emoji: '🥕', hindi: 'गाजर', english: 'Carrot' },
+      { emoji: '🥔', hindi: 'आलू', english: 'Potato' },
+      { emoji: '🍎', hindi: 'सेब', english: 'Apple' },
+      { emoji: '🥥', hindi: 'नारियल', english: 'Coconut' },
+      { emoji: '🍉', hindi: 'तरबूज', english: 'Watermelon' },
+      { emoji: '🫛', hindi: 'भिंडी', english: 'Bhindi/Okra' },
+      { emoji: '🍋', hindi: 'नींबू', english: 'Lemon' },
+      { emoji: '🍇', hindi: 'अंगूर', english: 'Grapes' },
+    ];
+
+    let currentRound = 0;
+    let wrongCount = 0;
+    let scoreTotal = 0;
+    let targetItem = null;
+    let locked = false;
+    let roundResults = [];
+    let roundHadWrong = false;
+
+    function startGame() {
+      currentRound = 0;
+      wrongCount = 0;
+      scoreTotal = 0;
+      roundResults = [];
+      locked = false;
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('totalRounds').textContent = TOTAL_ROUNDS;
+      buildProgressDots();
+      nextRound();
+    }
+
+    function buildProgressDots() {
+      const dots = document.getElementById('progressDots');
+      dots.innerHTML = '';
+      for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const d = document.createElement('div');
+        d.className = 'progress-dot' + (i === 0 ? ' current' : '');
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+      }
+    }
+
+    function updateDot(round, correct) {
+      const dot = document.getElementById('dot-' + round);
+      if (dot) {
+        dot.classList.remove('current');
+        dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+      }
+      const next = document.getElementById('dot-' + (round + 1));
+      if (next) next.classList.add('current');
+    }
+
+    function nextRound() {
+      if (currentRound >= TOTAL_ROUNDS) { endGame(); return; }
+      locked = false;
+      roundHadWrong = false;
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+      document.getElementById('roundNum').textContent = currentRound + 1;
+
+      // Pick 6 random items, one is the target
+      const pool = shuffle(ITEMS).slice(0, 6);
+      targetItem = pool[0];
+
+      document.getElementById('promptHindi').textContent = `👉 ${targetItem.hindi} (${targetItem.english}) ढूंढो!`;
+      document.getElementById('promptEnglish').textContent = `Tap the ${targetItem.hindi} (${targetItem.english})!`;
+
+      const grid = document.getElementById('emojiGrid');
+      grid.innerHTML = '';
+      shuffle(pool).forEach(item => {
+        const cell = document.createElement('div');
+        cell.className = 'emoji-cell';
+        cell.innerHTML = `<span class="emoji">${item.emoji}</span>`;
+        cell.addEventListener('click', () => handleAnswer(cell, item));
+        grid.appendChild(cell);
+      });
+    }
+
+    function handleAnswer(cell, item) {
+      if (locked) return;
+      if (item === targetItem) {
+        locked = true;
+        showCorrectFeedback(cell);
+        launchConfetti();
+        showStarFloat(cell.getBoundingClientRect().left + 40, cell.getBoundingClientRect().top);
+        scoreTotal++;
+        document.getElementById('scoreDisplay').textContent = scoreTotal;
+        roundResults.push(true);
+        updateDot(currentRound, true);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg correct';
+        fb.textContent = `✅ हाँ! यही है ${targetItem.hindi}! Correct!`;
+        currentRound++;
+        setTimeout(nextRound, 1100);
+      } else {
+        if (!roundHadWrong) {
+          wrongCount++;
+          roundHadWrong = true;
+        }
+        showWrongFeedback(cell);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg wrong';
+        fb.textContent = '❌ फिर से कोशिश करो! Try again!';
+      }
+    }
+
+    function endGame() {
+      document.getElementById('gameScreen').classList.add('hidden');
+      const endEl = document.getElementById('endScreen');
+      endEl.classList.remove('hidden');
+      const stars = calculateStars(wrongCount, TOTAL_ROUNDS);
+      const correct = roundResults.filter(Boolean).length;
+      showEndScreen(endEl, stars, correct, TOTAL_ROUNDS, ACTIVITY_ID, startGame);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

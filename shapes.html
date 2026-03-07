@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shapes | आकृतियाँ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    .shape-choices {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .shape-choice {
+      background: white;
+      border: 3px solid #E0E0E0;
+      border-radius: var(--border-radius-sm);
+      padding: 16px 8px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+      min-height: 90px;
+      user-select: none;
+    }
+    .shape-choice:hover {
+      border-color: var(--saffron);
+      transform: scale(1.04);
+    }
+    .shape-choice.correct {
+      background: #E8F5E9;
+      border-color: var(--light-green);
+      animation: pop 0.3s ease;
+    }
+    .shape-choice.wrong {
+      background: #FFEBEE;
+      border-color: var(--red);
+      animation: shake 0.4s ease;
+    }
+    .shape-choice .shape-name {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text-medium);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠</a>
+    <h1>🔷 आकृतियाँ<br><small style="font-size:0.8em">Shapes</small></h1>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="container">
+
+    <div id="gameScreen">
+      <div class="score-bar">
+        <span class="score-label">Round <span id="roundNum">1</span> / <span id="totalRounds">9</span></span>
+        <div class="progress-dots" id="progressDots"></div>
+        <span class="score-value">⭐ <span id="scoreDisplay">0</span></span>
+      </div>
+
+      <div class="prompt-box">
+        <p class="prompt-text" id="promptText">Find the shape!</p>
+        <p class="prompt-hindi" id="promptHindi"></p>
+      </div>
+
+      <!-- Target shape display -->
+      <div class="shape-display" id="shapeDisplay">
+        <svg id="targetSvg" class="shape-svg" width="120" height="120" viewBox="0 0 120 120"></svg>
+      </div>
+
+      <div class="shape-choices" id="shapesGrid"></div>
+
+      <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <div id="endScreen" class="hidden"></div>
+
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const ACTIVITY_ID = 'shapes';
+    const TOTAL_ROUNDS = 9;
+
+    const SHAPES = [
+      {
+        id: 'circle', hindi: 'वृत्त', english: 'Circle',
+        svg: '<circle cx="60" cy="60" r="50" fill="#FF9933" stroke="#E65100" stroke-width="3"/>',
+        color: '#FF9933'
+      },
+      {
+        id: 'square', hindi: 'वर्ग', english: 'Square',
+        svg: '<rect x="10" y="10" width="100" height="100" rx="4" fill="#42A5F5" stroke="#1565C0" stroke-width="3"/>',
+        color: '#42A5F5'
+      },
+      {
+        id: 'triangle', hindi: 'त्रिभुज', english: 'Triangle',
+        svg: '<polygon points="60,5 115,110 5,110" fill="#4CAF50" stroke="#1B5E20" stroke-width="3"/>',
+        color: '#4CAF50'
+      },
+      {
+        id: 'rectangle', hindi: 'आयत', english: 'Rectangle',
+        svg: '<rect x="5" y="25" width="110" height="70" rx="4" fill="#E91E8C" stroke="#880E4F" stroke-width="3"/>',
+        color: '#E91E8C'
+      },
+      {
+        id: 'star', hindi: 'तारा', english: 'Star',
+        svg: '<polygon points="60,5 72,40 110,40 80,62 92,100 60,78 28,100 40,62 10,40 48,40" fill="#FDD835" stroke="#F57F17" stroke-width="3"/>',
+        color: '#FDD835'
+      },
+      {
+        id: 'diamond', hindi: 'हीरा', english: 'Diamond',
+        svg: '<polygon points="60,5 115,60 60,115 5,60" fill="#7B1FA2" stroke="#4A148C" stroke-width="3"/>',
+        color: '#7B1FA2'
+      },
+      {
+        id: 'heart', hindi: 'दिल', english: 'Heart',
+        svg: '<path d="M60,95 C60,95 10,60 10,35 A25,25 0 0,1 60,30 A25,25 0 0,1 110,35 C110,60 60,95 60,95 Z" fill="#F44336" stroke="#B71C1C" stroke-width="3"/>',
+        color: '#F44336'
+      },
+      {
+        id: 'oval', hindi: 'अंडाकार', english: 'Oval',
+        svg: '<ellipse cx="60" cy="60" rx="55" ry="38" fill="#00897B" stroke="#004D40" stroke-width="3"/>',
+        color: '#00897B'
+      },
+      {
+        id: 'pentagon', hindi: 'पंचभुज', english: 'Pentagon',
+        svg: '<polygon points="60,5 112,42 90,105 30,105 8,42" fill="#FF7043" stroke="#BF360C" stroke-width="3"/>',
+        color: '#FF7043'
+      },
+    ];
+
+    let currentRound = 0;
+    let wrongCount = 0;
+    let scoreTotal = 0;
+    let targetShape = null;
+    let locked = false;
+    let roundResults = [];
+    let shapeOrder = [];
+    let roundHadWrong = false;
+
+    function startGame() {
+      currentRound = 0;
+      wrongCount = 0;
+      scoreTotal = 0;
+      roundResults = [];
+      locked = false;
+      shapeOrder = shuffle(SHAPES).slice(0, TOTAL_ROUNDS);
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('totalRounds').textContent = TOTAL_ROUNDS;
+      buildProgressDots();
+      nextRound();
+    }
+
+    function buildProgressDots() {
+      const dots = document.getElementById('progressDots');
+      dots.innerHTML = '';
+      for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const d = document.createElement('div');
+        d.className = 'progress-dot' + (i === 0 ? ' current' : '');
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+      }
+    }
+
+    function updateDot(round, correct) {
+      const dot = document.getElementById('dot-' + round);
+      if (dot) {
+        dot.classList.remove('current');
+        dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+      }
+      const next = document.getElementById('dot-' + (round + 1));
+      if (next) next.classList.add('current');
+    }
+
+    function nextRound() {
+      if (currentRound >= TOTAL_ROUNDS) { endGame(); return; }
+      locked = false;
+      roundHadWrong = false;
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+      document.getElementById('roundNum').textContent = currentRound + 1;
+
+      targetShape = shapeOrder[currentRound];
+
+      // Show target shape
+      document.getElementById('targetSvg').innerHTML = targetShape.svg;
+      document.getElementById('promptText').textContent = `Find the ${targetShape.english}! / ${targetShape.hindi} ढूंढो!`;
+      document.getElementById('promptHindi').textContent = `आकृति पहचानो!`;
+
+      // Build 6 shape choices including the target
+      const others = shuffle(SHAPES.filter(s => s.id !== targetShape.id)).slice(0, 5);
+      const pool = shuffle([targetShape, ...others]);
+
+      const grid = document.getElementById('shapesGrid');
+      grid.innerHTML = '';
+      pool.forEach(shape => {
+        const btn = document.createElement('button');
+        btn.className = 'shape-choice';
+        btn.innerHTML = `
+          <svg width="60" height="60" viewBox="0 0 120 120">${shape.svg}</svg>
+          <span class="shape-name">${shape.hindi}<br>${shape.english}</span>
+        `;
+        btn.addEventListener('click', () => handleAnswer(btn, shape));
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(btn, shape) {
+      if (locked) return;
+      if (shape.id === targetShape.id) {
+        locked = true;
+        btn.classList.add('correct');
+        launchConfetti();
+        showStarFloat(btn.getBoundingClientRect().left + 40, btn.getBoundingClientRect().top);
+        scoreTotal++;
+        document.getElementById('scoreDisplay').textContent = scoreTotal;
+        roundResults.push(true);
+        updateDot(currentRound, true);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg correct';
+        fb.textContent = `✅ हाँ! यह ${targetShape.hindi} है! Correct!`;
+        currentRound++;
+        setTimeout(nextRound, 1100);
+      } else {
+        if (!roundHadWrong) {
+          wrongCount++;
+          roundHadWrong = true;
+        }
+        btn.classList.remove('wrong');
+        void btn.offsetWidth;
+        btn.classList.add('wrong');
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg wrong';
+        fb.textContent = '❌ फिर से कोशिश करो! Try again!';
+      }
+    }
+
+    function endGame() {
+      document.getElementById('gameScreen').classList.add('hidden');
+      const endEl = document.getElementById('endScreen');
+      endEl.classList.remove('hidden');
+      const stars = calculateStars(wrongCount, TOTAL_ROUNDS);
+      const correct = roundResults.filter(Boolean).length;
+      showEndScreen(endEl, stars, correct, TOTAL_ROUNDS, ACTIVITY_ID, startGame);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

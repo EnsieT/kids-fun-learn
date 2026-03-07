@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Counting Game | गिनती का खेल</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    .objects-display {
+      font-size: 2.8rem;
+      min-height: 130px;
+      gap: 6px;
+    }
+    .choices-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠</a>
+    <h1>🔢 गिनती का खेल<br><small style="font-size:0.8em">Counting Game</small></h1>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="container">
+
+    <!-- Age Selector -->
+    <div id="setupScreen">
+      <div class="card text-center">
+        <p style="font-size:1.2rem;font-weight:700;margin-bottom:16px">Choose Age / उम्र चुनें:</p>
+        <div class="age-selector">
+          <button class="age-btn active" data-age="4">Age 4 (1–5)</button>
+          <button class="age-btn" data-age="5">Age 5 (1–10)</button>
+          <button class="age-btn" data-age="6">Age 6 (1–15)</button>
+        </div>
+        <button class="btn btn-primary mt-16" id="startBtn">🚀 Start!</button>
+      </div>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="gameScreen" class="hidden">
+
+      <div class="score-bar">
+        <span class="score-label">Round <span id="roundNum">1</span> / <span id="totalRounds">8</span></span>
+        <div class="progress-dots" id="progressDots"></div>
+        <span class="score-value">⭐ <span id="scoreDisplay">0</span></span>
+      </div>
+
+      <div class="objects-display" id="objectsDisplay"></div>
+
+      <div class="prompt-box">
+        <p class="prompt-text">How many? / कितने हैं?</p>
+      </div>
+
+      <div class="choices-grid" id="choicesGrid"></div>
+
+      <div class="feedback-msg" id="feedbackMsg"></div>
+
+    </div>
+
+    <!-- End Screen -->
+    <div id="endScreen" class="hidden"></div>
+
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const ACTIVITY_ID = 'counting';
+    const TOTAL_ROUNDS = 8;
+
+    const OBJECTS = [
+      { emoji: '🥭', name: 'Mango' },
+      { emoji: '🥥', name: 'Coconut' },
+      { emoji: '🍌', name: 'Banana' },
+      { emoji: '🪔', name: 'Diya' },
+      { emoji: '🌺', name: 'Flower' },
+      { emoji: '🐘', name: 'Elephant' },
+      { emoji: '⭐', name: 'Star' },
+      { emoji: '🦚', name: 'Peacock' },
+    ];
+
+    let selectedAge = 4;
+    let currentRound = 0;
+    let correctAnswer = 0;
+    let wrongCount = 0;
+    let scoreTotal = 0;
+    let roundResults = [];
+    let locked = false;
+    let roundHadWrong = false;
+
+    // Age selector buttons
+    document.querySelectorAll('.age-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.age-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedAge = parseInt(btn.dataset.age);
+      });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', startGame);
+
+    function getRange() {
+      if (selectedAge === 4) return [1, 5];
+      if (selectedAge === 5) return [1, 10];
+      return [1, 15];
+    }
+
+    function startGame() {
+      currentRound = 0;
+      wrongCount = 0;
+      scoreTotal = 0;
+      roundResults = [];
+      locked = false;
+      document.getElementById('setupScreen').classList.add('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('totalRounds').textContent = TOTAL_ROUNDS;
+      buildProgressDots();
+      nextRound();
+    }
+
+    function buildProgressDots() {
+      const dots = document.getElementById('progressDots');
+      dots.innerHTML = '';
+      for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const d = document.createElement('div');
+        d.className = 'progress-dot' + (i === 0 ? ' current' : '');
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+      }
+    }
+
+    function updateDot(round, correct) {
+      const dot = document.getElementById('dot-' + round);
+      if (dot) {
+        dot.classList.remove('current');
+        dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+      }
+      const next = document.getElementById('dot-' + (round + 1));
+      if (next) next.classList.add('current');
+    }
+
+    function nextRound() {
+      if (currentRound >= TOTAL_ROUNDS) {
+        endGame();
+        return;
+      }
+      locked = false;
+      roundHadWrong = false;
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+      document.getElementById('roundNum').textContent = currentRound + 1;
+
+      const [min, max] = getRange();
+      correctAnswer = randInt(min, max);
+      const obj = OBJECTS[currentRound % OBJECTS.length];
+
+      // Display objects
+      const display = document.getElementById('objectsDisplay');
+      display.innerHTML = '';
+      for (let i = 0; i < correctAnswer; i++) {
+        const span = document.createElement('span');
+        span.textContent = obj.emoji;
+        display.appendChild(span);
+      }
+
+      // Build answer choices (correct + 3 distractors)
+      let choices = new Set([correctAnswer]);
+      while (choices.size < 4) {
+        let c = randInt(Math.max(1, correctAnswer - 4), Math.min(max, correctAnswer + 4));
+        if (c !== correctAnswer) choices.add(c);
+      }
+      choices = shuffle([...choices]);
+
+      const grid = document.getElementById('choicesGrid');
+      grid.innerHTML = '';
+      choices.forEach(num => {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = num;
+        btn.addEventListener('click', () => handleAnswer(btn, num));
+        grid.appendChild(btn);
+      });
+    }
+
+    function handleAnswer(btn, chosen) {
+      if (locked) return;
+      if (chosen === correctAnswer) {
+        locked = true;
+        showCorrectFeedback(btn);
+        showStarFloat(btn.getBoundingClientRect().left + 30, btn.getBoundingClientRect().top);
+        launchConfetti();
+        scoreTotal++;
+        document.getElementById('scoreDisplay').textContent = scoreTotal;
+        roundResults.push(true);
+        updateDot(currentRound, true);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg correct';
+        fb.textContent = '✅ शाबाश! Correct!';
+        currentRound++;
+        setTimeout(nextRound, 1000);
+      } else {
+        if (!roundHadWrong) {
+          wrongCount++;
+          roundHadWrong = true;
+        }
+        showWrongFeedback(btn);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg wrong';
+        fb.textContent = '❌ फिर से कोशिश करो! Try again!';
+      }
+    }
+
+    function endGame() {
+      document.getElementById('gameScreen').classList.add('hidden');
+      const endEl = document.getElementById('endScreen');
+      endEl.classList.remove('hidden');
+      const stars = calculateStars(wrongCount, TOTAL_ROUNDS);
+      const correct = roundResults.filter(Boolean).length;
+      showEndScreen(endEl, stars, correct, TOTAL_ROUNDS, ACTIVITY_ID, () => {
+        document.getElementById('endScreen').classList.add('hidden');
+        document.getElementById('setupScreen').classList.remove('hidden');
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odd One Out | अलग कौन?</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+
+  <div class="page-header">
+    <a href="index.html" class="home-btn" aria-label="Home">🏠</a>
+    <h1>🤔 अलग कौन?<br><small style="font-size:0.8em">Odd One Out</small></h1>
+    <div style="width:48px"></div>
+  </div>
+
+  <div class="container">
+
+    <div id="gameScreen">
+      <div class="score-bar">
+        <span class="score-label">Round <span id="roundNum">1</span> / <span id="totalRounds">8</span></span>
+        <div class="progress-dots" id="progressDots"></div>
+        <span class="score-value">⭐ <span id="scoreDisplay">0</span></span>
+      </div>
+
+      <div class="prompt-box">
+        <p class="prompt-text">Which one doesn't belong?</p>
+        <p class="prompt-hindi">अलग कौन सा है? 🤔</p>
+      </div>
+
+      <div class="odd-grid" id="oddGrid"></div>
+
+      <div class="feedback-msg" id="feedbackMsg"></div>
+    </div>
+
+    <div id="endScreen" class="hidden"></div>
+
+  </div>
+
+  <script src="js/common.js"></script>
+  <script>
+    const ACTIVITY_ID = 'odd-one-out';
+    const TOTAL_ROUNDS = 8;
+
+    // Each puzzle: 3 belong + 1 odd, with explanation
+    const PUZZLES = [
+      {
+        items: [
+          { emoji: '🥭', label: 'Mango' },
+          { emoji: '🍌', label: 'Banana' },
+          { emoji: '🐄', label: 'Cow' },
+          { emoji: '🍎', label: 'Apple' },
+        ],
+        oddIndex: 2,
+        hint: '🐄 गाय फल नहीं है! Cow is not a fruit!'
+      },
+      {
+        items: [
+          { emoji: '🐘', label: 'Elephant' },
+          { emoji: '🐯', label: 'Tiger' },
+          { emoji: '🥕', label: 'Carrot' },
+          { emoji: '🦁', label: 'Lion' },
+        ],
+        oddIndex: 2,
+        hint: '🥕 गाजर जानवर नहीं है! Carrot is not an animal!'
+      },
+      {
+        items: [
+          { emoji: '🔴', label: 'Red' },
+          { emoji: '🔵', label: 'Blue' },
+          { emoji: '🟡', label: 'Yellow' },
+          { emoji: '🐕', label: 'Dog' },
+        ],
+        oddIndex: 3,
+        hint: '🐕 कुत्ता रंग नहीं है! Dog is not a color!'
+      },
+      {
+        items: [
+          { emoji: '✏️', label: 'Pencil' },
+          { emoji: '📚', label: 'Book' },
+          { emoji: '🎒', label: 'Bag' },
+          { emoji: '🥥', label: 'Coconut' },
+        ],
+        oddIndex: 3,
+        hint: '🥥 नारियल स्कूल की चीज़ नहीं है! Coconut is not a school item!'
+      },
+      {
+        items: [
+          { emoji: '🍅', label: 'Tomato' },
+          { emoji: '🥔', label: 'Potato' },
+          { emoji: '🍆', label: 'Brinjal' },
+          { emoji: '🐒', label: 'Monkey' },
+        ],
+        oddIndex: 3,
+        hint: '🐒 बंदर सब्ज़ी नहीं है! Monkey is not a vegetable!'
+      },
+      {
+        items: [
+          { emoji: '🚗', label: 'Car' },
+          { emoji: '🚌', label: 'Bus' },
+          { emoji: '🚲', label: 'Bicycle' },
+          { emoji: '🦚', label: 'Peacock' },
+        ],
+        oddIndex: 3,
+        hint: '🦚 मोर वाहन नहीं है! Peacock is not a vehicle!'
+      },
+      {
+        items: [
+          { emoji: '🍎', label: 'Apple' },
+          { emoji: '🍇', label: 'Grapes' },
+          { emoji: '🍋', label: 'Lemon' },
+          { emoji: '🥕', label: 'Carrot' },
+        ],
+        oddIndex: 3,
+        hint: '🥕 गाजर फल नहीं है! Carrot is not a fruit!'
+      },
+      {
+        items: [
+          { emoji: '🎵', label: 'Music' },
+          { emoji: '🎨', label: 'Art' },
+          { emoji: '🎮', label: 'Games' },
+          { emoji: '🥭', label: 'Mango' },
+        ],
+        oddIndex: 3,
+        hint: '🥭 आम खेल नहीं है! Mango is not an activity!'
+      },
+    ];
+
+    let currentRound = 0;
+    let wrongCount = 0;
+    let scoreTotal = 0;
+    let locked = false;
+    let roundResults = [];
+    let puzzleOrder = [];
+    let currentPuzzle = null;
+    let roundHadWrong = false;
+
+    function startGame() {
+      currentRound = 0;
+      wrongCount = 0;
+      scoreTotal = 0;
+      roundResults = [];
+      locked = false;
+      puzzleOrder = shuffle(PUZZLES).slice(0, TOTAL_ROUNDS);
+      document.getElementById('gameScreen').classList.remove('hidden');
+      document.getElementById('endScreen').classList.add('hidden');
+      document.getElementById('totalRounds').textContent = TOTAL_ROUNDS;
+      buildProgressDots();
+      nextRound();
+    }
+
+    function buildProgressDots() {
+      const dots = document.getElementById('progressDots');
+      dots.innerHTML = '';
+      for (let i = 0; i < TOTAL_ROUNDS; i++) {
+        const d = document.createElement('div');
+        d.className = 'progress-dot' + (i === 0 ? ' current' : '');
+        d.id = 'dot-' + i;
+        dots.appendChild(d);
+      }
+    }
+
+    function updateDot(round, correct) {
+      const dot = document.getElementById('dot-' + round);
+      if (dot) {
+        dot.classList.remove('current');
+        dot.classList.add(correct ? 'done-correct' : 'done-wrong');
+      }
+      const next = document.getElementById('dot-' + (round + 1));
+      if (next) next.classList.add('current');
+    }
+
+    function nextRound() {
+      if (currentRound >= TOTAL_ROUNDS) { endGame(); return; }
+      locked = false;
+      roundHadWrong = false;
+      document.getElementById('feedbackMsg').className = 'feedback-msg';
+      document.getElementById('roundNum').textContent = currentRound + 1;
+
+      currentPuzzle = puzzleOrder[currentRound];
+
+      // Shuffle the items but remember which is the odd one
+      const indexedItems = currentPuzzle.items.map((item, i) => ({ ...item, origIndex: i }));
+      const shuffled = shuffle(indexedItems);
+
+      const grid = document.getElementById('oddGrid');
+      grid.innerHTML = '';
+      shuffled.forEach(item => {
+        const cell = document.createElement('div');
+        cell.className = 'odd-cell';
+        cell.innerHTML = `<span class="odd-emoji">${item.emoji}</span><span class="odd-label">${item.label}</span>`;
+        cell.addEventListener('click', () => handleAnswer(cell, item.origIndex));
+        grid.appendChild(cell);
+      });
+    }
+
+    function handleAnswer(cell, origIndex) {
+      if (locked) return;
+      if (origIndex === currentPuzzle.oddIndex) {
+        locked = true;
+        cell.classList.add('correct');
+        launchConfetti();
+        showStarFloat(cell.getBoundingClientRect().left + 40, cell.getBoundingClientRect().top);
+        scoreTotal++;
+        document.getElementById('scoreDisplay').textContent = scoreTotal;
+        roundResults.push(true);
+        updateDot(currentRound, true);
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg correct';
+        fb.textContent = '✅ ' + currentPuzzle.hint;
+        currentRound++;
+        setTimeout(nextRound, 1400);
+      } else {
+        if (!roundHadWrong) {
+          wrongCount++;
+          roundHadWrong = true;
+        }
+        cell.classList.remove('wrong');
+        void cell.offsetWidth;
+        cell.classList.add('wrong');
+        const fb = document.getElementById('feedbackMsg');
+        fb.className = 'feedback-msg wrong';
+        fb.textContent = '❌ फिर से कोशिश करो! Try again!';
+      }
+    }
+
+    function endGame() {
+      document.getElementById('gameScreen').classList.add('hidden');
+      const endEl = document.getElementById('endScreen');
+      endEl.classList.remove('hidden');
+      const stars = calculateStars(wrongCount, TOTAL_ROUNDS);
+      const correct = roundResults.filter(Boolean).length;
+      showEndScreen(endEl, stars, correct, TOTAL_ROUNDS, ACTIVITY_ID, startGame);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>
