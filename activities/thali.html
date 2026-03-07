@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🍽️ Make a Thali · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .thali-wrap {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 12px 40px;
+  }
+
+  /* ===== Round Header ===== */
+  .thali-round-header {
+    text-align: center;
+    padding: 10px 0 4px;
+  }
+  .thali-round-title {
+    font-size: clamp(1.15rem, 4.5vw, 1.5rem);
+    font-weight: 900;
+    color: var(--orange);
+  }
+  .thali-round-sub {
+    font-size: 0.85rem;
+    color: #888;
+    font-weight: 700;
+  }
+  .hear-row {
+    display: flex;
+    justify-content: center;
+    margin: 6px 0 2px;
+  }
+
+  /* ===== Selected Food Indicator ===== */
+  .food-indicator {
+    text-align: center;
+    min-height: 30px;
+    font-size: clamp(0.9rem, 3.2vw, 1.05rem);
+    font-weight: 900;
+    color: var(--orange);
+    margin: 4px 0;
+    transition: opacity 0.2s;
+  }
+  .food-indicator.empty { color: #aaa; font-weight: 700; }
+
+  /* ===== Thali Plate ===== */
+  .thali-container {
+    position: relative;
+    width: min(300px, 86vw);
+    aspect-ratio: 1;
+    margin: 0 auto 6px;
+  }
+  .thali-plate {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 32% 28%, #f5eed8, #d4b060 55%, #a07828);
+    border: 6px double #8a6420;
+    box-shadow:
+      0 0 0 3px #d4b060,
+      0 8px 32px rgba(0,0,0,0.22),
+      inset 0 3px 10px rgba(255,255,255,0.45),
+      inset 0 -2px 8px rgba(0,0,0,0.18);
+  }
+  /* Inner decorative ring */
+  .thali-plate::after {
+    content: '';
+    position: absolute;
+    inset: 8%;
+    border-radius: 50%;
+    border: 2px dashed rgba(160,120,40,0.35);
+    pointer-events: none;
+  }
+
+  /* ===== Katori (bowls) ===== */
+  .katori {
+    position: absolute;
+    width: 23%;
+    height: 23%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 38% 30%, #fffdf5, #ede0c0);
+    border: 3px solid #c8a030;
+    box-shadow:
+      inset 0 3px 8px rgba(0,0,0,0.22),
+      0 2px 6px rgba(0,0,0,0.12);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+    overflow: hidden;
+    gap: 1px;
+    z-index: 1;
+  }
+  .katori:hover  { transform: scale(1.12); box-shadow: inset 0 3px 8px rgba(0,0,0,0.22), 0 5px 14px rgba(0,0,0,0.2); }
+  .katori.filled { cursor: default; background: radial-gradient(circle at 38% 30%, #fff9e8, #f0e0a8); }
+  .katori.filled:hover { transform: none; }
+  .katori.target-glow {
+    border-color: var(--green) !important;
+    box-shadow: inset 0 3px 8px rgba(0,0,0,0.18), 0 0 0 4px rgba(76,175,80,0.4) !important;
+  }
+  .katori.wrong-shake { animation: shake 0.45s ease; border-color: var(--red) !important; }
+
+  /* Katori positions — 6 equally spaced around circle */
+  .katori[data-pos="0"] { top: 7%;  left: 38.5%; } /* top       — rice   */
+  .katori[data-pos="1"] { top: 22%; left: 67%;   } /* top-right — curry  */
+  .katori[data-pos="2"] { top: 56%; left: 67%;   } /* bot-right — salad  */
+  .katori[data-pos="3"] { top: 71%; left: 38.5%; } /* bottom   — dairy  */
+  .katori[data-pos="4"] { top: 56%; left: 10%;   } /* bot-left  — sweet  */
+  .katori[data-pos="5"] { top: 22%; left: 10%;   } /* top-left  — pickle */
+
+  .katori-emoji {
+    font-size: clamp(1rem, 4vmin, 1.35rem);
+    line-height: 1;
+  }
+  .katori-label {
+    font-size: clamp(0.42rem, 1.5vmin, 0.6rem);
+    font-weight: 800;
+    color: #7a6030;
+    text-align: center;
+    padding: 0 2px;
+    line-height: 1.2;
+  }
+  .katori.filled .katori-emoji { font-size: clamp(1.35rem, 5.5vmin, 1.75rem); }
+  .katori.filled .katori-label { display: none; }
+
+  /* ===== Food Shelf ===== */
+  .food-shelf-section {
+    margin-top: 10px;
+  }
+  .food-shelf-label {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #888;
+    margin-bottom: 8px;
+  }
+  .food-shelf {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 6px 4px 14px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+  }
+  .food-shelf::-webkit-scrollbar { height: 4px; }
+  .food-shelf::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+  .food-item {
+    flex-shrink: 0;
+    width: 72px;
+    height: 82px;
+    border-radius: 18px;
+    background: #fff;
+    border: 3px solid #ddd;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: transform 0.18s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    user-select: none;
+  }
+  .food-item:hover  { transform: scale(1.06) translateY(-2px); }
+  .food-item:active { transform: scale(0.94); }
+  .food-item.selected {
+    border-color: var(--orange);
+    background: #FFF9C4;
+    transform: scale(1.12) translateY(-6px);
+    box-shadow: 0 6px 20px rgba(255,140,0,0.38);
+  }
+  .food-item.used {
+    opacity: 0.28;
+    pointer-events: none;
+    filter: grayscale(0.7);
+  }
+  .food-item .food-emoji { font-size: 1.9rem; line-height: 1; }
+  .food-item .food-name  { font-size: 0.68rem; font-weight: 800; color: #555; text-align: center; }
+
+  @media (max-width: 380px) {
+    .food-item { width: 62px; height: 72px; }
+    .food-item .food-emoji { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🍽️ Make a Thali / थाली सजाओ</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/4</span>
+</header>
+
+<div id="game-area">
+  <div class="thali-wrap">
+
+    <!-- Round Header -->
+    <div class="thali-round-header">
+      <p class="thali-round-title" id="round-title">🍽️ सादी थाली</p>
+      <p class="thali-round-sub"   id="round-sub">Simple Thali · Round 1 / 4</p>
+      <div class="hear-row">
+        <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+      </div>
+    </div>
+
+    <!-- Selected food indicator -->
+    <p class="food-indicator empty" id="food-indicator">👆 नीचे से खाना चुनो · Tap a food below!</p>
+
+    <!-- Thali Plate -->
+    <div class="thali-container" id="thali-container">
+      <div class="thali-plate"></div>
+      <!-- 6 katori — built by JS -->
+    </div>
+
+    <!-- Food Shelf -->
+    <div class="food-shelf-section">
+      <p class="food-shelf-label">🍱 खाने की चीज़ें · Food items</p>
+      <div class="food-shelf" id="food-shelf"></div>
+    </div>
+
+    <!-- Feedback -->
+    <div id="feedback-banner" class="feedback-banner"></div>
+
+  </div>
+</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title"  id="completion-title"></div>
+  <div class="completion-score"  id="completion-score"></div>
+  <div class="completion-best"   id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 Play Again / फिर खेलो</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const TOTAL_ROUNDS = 4;
+
+// Fixed katori definitions (category, hint emoji, Hindi label)
+const KATORI_CONFIG = [
+  { key: 'rice',   emoji: '🍚', hi: 'चावल/रोटी' },
+  { key: 'curry',  emoji: '🥘', hi: 'सब्ज़ी/दाल' },
+  { key: 'salad',  emoji: '🥗', hi: 'सलाद'       },
+  { key: 'dairy',  emoji: '🥛', hi: 'दही'         },
+  { key: 'sweet',  emoji: '🍬', hi: 'मिठाई'       },
+  { key: 'pickle', emoji: '🫙', hi: 'अचार'        }
+];
+
+const ROUNDS = [
+  {
+    name: '🍽️ सादी थाली', name_en: 'Simple Thali',
+    foods: [
+      { emoji: '🍚', name: 'चावल',          category: 'rice'   },
+      { emoji: '🫓', name: 'रोटी',           category: 'rice'   },
+      { emoji: '🥘', name: 'दाल',            category: 'curry'  },
+      { emoji: '🍛', name: 'सब्ज़ी',         category: 'curry'  },
+      { emoji: '🥒', name: 'खीरा',           category: 'salad'  },
+      { emoji: '🥗', name: 'सलाद',           category: 'salad'  },
+      { emoji: '🥛', name: 'दही',            category: 'dairy'  },
+      { emoji: '🧁', name: 'गुलाब जामुन',    category: 'sweet'  },
+      { emoji: '🍮', name: 'खीर',            category: 'sweet'  },
+      { emoji: '🫙', name: 'अचार',           category: 'pickle' }
+    ]
+  },
+  {
+    name: '🌾 पंजाबी थाली', name_en: 'Punjabi Thali',
+    foods: [
+      { emoji: '🫓', name: 'रोटी',   category: 'rice'   },
+      { emoji: '🍞', name: 'नान',    category: 'rice'   },
+      { emoji: '🥘', name: 'पनीर',  category: 'curry'  },
+      { emoji: '🫘', name: 'छोले',  category: 'curry'  },
+      { emoji: '🧅', name: 'प्याज़', category: 'salad'  },
+      { emoji: '🥗', name: 'सलाद',  category: 'salad'  },
+      { emoji: '🥛', name: 'लस्सी', category: 'dairy'  },
+      { emoji: '🧈', name: 'मक्खन', category: 'dairy'  },
+      { emoji: '🍮', name: 'हलवा',  category: 'sweet'  },
+      { emoji: '🍬', name: 'बर्फी', category: 'sweet'  },
+      { emoji: '🫙', name: 'अचार',  category: 'pickle' }
+    ]
+  },
+  {
+    name: '🌴 दक्षिण भारतीय थाली', name_en: 'South Indian Thali',
+    foods: [
+      { emoji: '🍚', name: 'इडली',    category: 'rice'   },
+      { emoji: '🥞', name: 'डोसा',    category: 'rice'   },
+      { emoji: '🥘', name: 'सांबर',   category: 'curry'  },
+      { emoji: '🍛', name: 'रसम',     category: 'curry'  },
+      { emoji: '🥦', name: 'कोसंबरी', category: 'salad'  },
+      { emoji: '🥗', name: 'पचड़ी',   category: 'salad'  },
+      { emoji: '🥛', name: 'दही',     category: 'dairy'  },
+      { emoji: '🧃', name: 'मठ्ठा',   category: 'dairy'  },
+      { emoji: '🍮', name: 'पायसम',   category: 'sweet'  },
+      { emoji: '🍬', name: 'लड्डू',   category: 'sweet'  },
+      { emoji: '🫙', name: 'चटनी',    category: 'pickle' }
+    ]
+  },
+  {
+    name: '🎉 त्योहार की थाली', name_en: 'Festival Thali',
+    foods: [
+      { emoji: '🫓', name: 'पूरी',          category: 'rice'   },
+      { emoji: '🍚', name: 'खिचड़ी',        category: 'rice'   },
+      { emoji: '🥘', name: 'पनीर',          category: 'curry'  },
+      { emoji: '🍛', name: 'आलू की सब्ज़ी', category: 'curry'  },
+      { emoji: '🥒', name: 'रायता',         category: 'salad'  },
+      { emoji: '🥗', name: 'कचूमर',        category: 'salad'  },
+      { emoji: '🍮', name: 'खीर',           category: 'dairy'  },
+      { emoji: '🥛', name: 'दूध',           category: 'dairy'  },
+      { emoji: '🧁', name: 'गुलाब जामुन',   category: 'sweet'  },
+      { emoji: '🍬', name: 'लड्डू',         category: 'sweet'  },
+      { emoji: '🫙', name: 'मीठी चटनी',    category: 'pickle' }
+    ]
+  }
+];
+
+// ===== State =====
+let currentRound  = 0;
+let mistakes      = 0;
+let selectedFood  = null;   // { idx, item }
+let filledKatori  = {};     // { rice: emoji, ... }
+let usedFoods     = new Set();
+let placeLocked   = false;
+
+// ===== Helpers =====
+function hearAgain() {
+  speakHindi('थाली सजाओ!');
+}
+
+function showBriefFeedback(msg, good) {
+  const el = document.getElementById('feedback-banner');
+  if (!el) return;
+  el.className = 'feedback-banner show ' + (good ? 'correct-fb' : 'wrong-fb');
+  el.textContent = msg;
+  setTimeout(() => el.classList.remove('show'), 1300);
+}
+
+// ===== Init =====
+function initGame() {
+  currentRound = 0;
+  mistakes = 0;
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  loadRound(0);
+}
+
+// ===== Load Round =====
+function loadRound(idx) {
+  filledKatori  = {};
+  usedFoods     = new Set();
+  selectedFood  = null;
+  placeLocked   = false;
+  updateProgress(idx, TOTAL_ROUNDS);
+
+  const r = ROUNDS[idx];
+  document.getElementById('round-title').textContent = r.name;
+  document.getElementById('round-sub').textContent   = `${r.name_en} · Round ${idx + 1} / ${TOTAL_ROUNDS}`;
+  updateFoodIndicator();
+
+  buildKatori();
+  buildFoodShelf(r.foods);
+
+  setTimeout(() => speakHindi('थाली सजाओ!'), 400);
+}
+
+// ===== Build Katori =====
+function buildKatori() {
+  const container = document.getElementById('thali-container');
+  // Remove old katori
+  container.querySelectorAll('.katori').forEach(k => k.remove());
+
+  KATORI_CONFIG.forEach((cfg, pos) => {
+    const div = document.createElement('div');
+    div.className = 'katori';
+    div.dataset.pos = pos;
+    div.dataset.key = cfg.key;
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', cfg.hi);
+    div.innerHTML = `
+      <span class="katori-emoji">${cfg.emoji}</span>
+      <span class="katori-label">${cfg.hi}</span>
+    `;
+    div.onclick = () => handleKatoriTap(div, cfg.key);
+    container.appendChild(div);
+  });
+}
+
+// ===== Build Food Shelf =====
+function buildFoodShelf(foods) {
+  const shelf = document.getElementById('food-shelf');
+  shelf.innerHTML = '';
+
+  foods.forEach((food, idx) => {
+    const div = document.createElement('div');
+    div.className = 'food-item';
+    div.dataset.idx = idx;
+    div.setAttribute('role', 'button');
+    div.setAttribute('aria-label', food.name);
+    div.innerHTML = `
+      <span class="food-emoji">${food.emoji}</span>
+      <span class="food-name">${food.name}</span>
+    `;
+    div.onclick = () => handleFoodTap(div, idx, food);
+    shelf.appendChild(div);
+  });
+}
+
+// ===== Handle Food Tap =====
+function handleFoodTap(el, idx, food) {
+  if (usedFoods.has(idx)) return;
+
+  // Deselect if same food tapped again
+  if (selectedFood && selectedFood.idx === idx) {
+    selectedFood = null;
+    el.classList.remove('selected');
+    updateFoodIndicator();
+    return;
+  }
+
+  // Deselect previous
+  if (selectedFood) {
+    const prev = document.querySelector(`.food-item[data-idx="${selectedFood.idx}"]`);
+    if (prev) prev.classList.remove('selected');
+  }
+
+  selectedFood = { idx, item: food };
+  el.classList.add('selected');
+  speakHindi(food.name);
+  updateFoodIndicator();
+}
+
+// ===== Handle Katori Tap =====
+function handleKatoriTap(el, key) {
+  if (placeLocked) return;
+
+  if (!selectedFood) {
+    speakHindi('पहले खाना चुनो!');
+    return;
+  }
+
+  if (filledKatori[key]) {
+    speakHindi('यह पहले से भरा है!');
+    return;
+  }
+
+  if (selectedFood.item.category === key) {
+    // ===== Correct placement =====
+    placeLocked = true;
+    filledKatori[key] = selectedFood.item.emoji;
+
+    el.innerHTML = `<span class="katori-emoji">${selectedFood.item.emoji}</span>`;
+    el.classList.add('filled', 'target-glow');
+    setTimeout(() => el.classList.remove('target-glow'), 800);
+
+    const foodEl = document.querySelector(`.food-item[data-idx="${selectedFood.idx}"]`);
+    if (foodEl) {
+      foodEl.classList.remove('selected');
+      foodEl.classList.add('used');
+    }
+    usedFoods.add(selectedFood.idx);
+    selectedFood = null;
+    updateFoodIndicator();
+    speakHindi('सही!');
+    showBriefFeedback('✅ सही! Right!', true);
+
+    placeLocked = false;
+    checkThaliComplete();
+
+  } else {
+    // ===== Wrong placement =====
+    mistakes++;
+    placeLocked = true;
+    el.classList.add('wrong-shake');
+    speakHindi('ये यहाँ नहीं, दूसरी जगह रखो!');
+    showBriefFeedback('❌ दूसरी जगह रखो! Wrong bowl!', false);
+    setTimeout(() => {
+      el.classList.remove('wrong-shake');
+      placeLocked = false;
+    }, 500);
+  }
+}
+
+// ===== Update food indicator =====
+function updateFoodIndicator() {
+  const el = document.getElementById('food-indicator');
+  if (!el) return;
+  if (selectedFood) {
+    el.className = 'food-indicator';
+    el.textContent = `${selectedFood.item.emoji} ${selectedFood.item.name} चुना! — थाली में रखो!`;
+  } else {
+    el.className = 'food-indicator empty';
+    el.textContent = '👆 नीचे से खाना चुनो · Tap a food below!';
+  }
+}
+
+// ===== Check if all katori filled =====
+function checkThaliComplete() {
+  if (Object.keys(filledKatori).length === KATORI_CONFIG.length) {
+    speakHindi('वाह! थाली सज गई!');
+    launchConfetti();
+    currentRound++;
+
+    setTimeout(() => {
+      if (currentRound >= TOTAL_ROUNDS) {
+        showThaliCompletion();
+      } else {
+        loadRound(currentRound);
+      }
+    }, 1800);
+  }
+}
+
+// ===== Completion (custom stars: 0=3, 1-4=2, 5+=1) =====
+function showThaliCompletion() {
+  const stars = mistakes === 0 ? 3 : mistakes <= 4 ? 2 : 1;
+  saveBestScore('thali', stars);
+  const best = getBestScore('thali');
+
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('completion-screen').classList.add('show');
+
+  document.getElementById('completion-stars').textContent = starsHTML(stars);
+
+  const titleEl = document.getElementById('completion-title');
+  if (stars === 3) {
+    titleEl.textContent = '🎊 शानदार थाली! Excellent!';
+    speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!');
+  } else if (stars === 2) {
+    titleEl.textContent = '👏 बहुत अच्छी थाली! Very Good!';
+    speakHindi('बहुत अच्छा! दो सितारे!');
+  } else {
+    titleEl.textContent = '💪 अच्छी कोशिश! Good Try!';
+    speakHindi('अच्छी कोशिश! एक सितारा!');
+  }
+
+  document.getElementById('completion-score').textContent = `Mistakes: ${mistakes}`;
+  document.getElementById('completion-best').textContent  = `Best: ${starsHTML(best)}`;
+  launchConfetti();
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>
