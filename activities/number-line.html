@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Number Line 🐸 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+.nl-container {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 16px;
+  text-align: center;
+}
+
+/* Question box */
+.question-box {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 20px 16px 14px;
+  margin-bottom: 20px;
+}
+.question-text {
+  font-size: clamp(1.3rem, 4.5vw, 2rem);
+  font-weight: 800;
+  color: #333;
+  white-space: pre-line;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+.hear-row {
+  display: flex;
+  justify-content: center;
+}
+
+/* Number line card */
+.nl-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 12px 8px 18px;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Desktop: single horizontal row with frog above */
+.nl-track {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  min-width: 500px;
+  position: relative;
+  padding-top: 68px;
+  padding-bottom: 4px;
+}
+
+.nl-line {
+  position: absolute;
+  bottom: 30px;
+  left: 4%;
+  right: 4%;
+  height: 6px;
+  background: linear-gradient(90deg, var(--orange), var(--yellow));
+  border-radius: 3px;
+  z-index: 0;
+}
+
+.nl-frog {
+  position: absolute;
+  top: 0;
+  font-size: 2.4rem;
+  line-height: 1;
+  z-index: 10;
+  pointer-events: none;
+  transform: translateX(-50%);
+  transition: left 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 3px 4px rgba(0,0,0,0.2));
+}
+.nl-frog.bounce-anim {
+  animation: frog-hop 0.45s ease;
+}
+
+@keyframes frog-hop {
+  0%   { transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1); }
+  35%  { transform: translateX(-50%) translateY(-28px) scaleX(0.88) scaleY(1.15); }
+  65%  { transform: translateX(-50%) translateY(-10px) scaleX(1.05) scaleY(0.95); }
+  85%  { transform: translateX(-50%) translateY(-16px) scaleX(0.95) scaleY(1.05); }
+  100% { transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1); }
+}
+
+.nl-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 48px;
+  position: relative;
+  z-index: 2;
+}
+
+.nl-num-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: 3px solid #ddd;
+  background: #fff;
+  font-size: 1.35rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+  transition: transform 0.15s, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #333;
+  position: relative;
+  z-index: 2;
+}
+.nl-num-btn:hover  { transform: scale(1.15); background: #FFF9C4; border-color: var(--orange); }
+.nl-num-btn:active { transform: scale(0.93); }
+.nl-num-btn.current {
+  background: linear-gradient(135deg, #FFD700, #FF8C00);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(255,140,0,0.45);
+}
+.nl-num-btn.correct {
+  background: #E8F5E9;
+  border-color: var(--green);
+  color: var(--green);
+  animation: pulse-correct 0.5s;
+}
+.nl-num-btn.wrong {
+  background: #FFEBEE;
+  border-color: var(--red);
+  color: var(--red);
+  animation: shake 0.5s;
+}
+
+/* Mobile: two rows of 5 */
+@media (max-width: 479px) {
+  .nl-track {
+    min-width: unset;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    padding-top: 12px;
+    padding-bottom: 8px;
+  }
+  .nl-line  { display: none; }
+  .nl-frog  { display: none; }
+  .nl-node  { flex: 0 0 auto; }
+  .nl-num-btn {
+    width: 56px;
+    height: 56px;
+    font-size: 1.45rem;
+  }
+  .nl-num-btn.current {
+    box-shadow: 0 0 0 5px rgba(255,140,0,0.5);
+  }
+}
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🐸 Number Line</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/10</span>
+</header>
+
+<div id="game-area">
+  <div class="nl-container">
+
+    <div id="feedback-banner" class="feedback-banner"></div>
+
+    <div class="question-box">
+      <div class="question-text" id="question-text">Loading…</div>
+      <div class="hear-row">
+        <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+      </div>
+    </div>
+
+    <div class="nl-card">
+      <div class="nl-track" id="nl-track">
+        <div class="nl-line"></div>
+        <div class="nl-frog" id="nl-frog">🐸</div>
+        <!-- number nodes inserted by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Completion Screen -->
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars">⭐⭐⭐</div>
+  <div class="completion-title" id="completion-title">शानदार! Excellent!</div>
+  <div class="completion-score" id="completion-score"></div>
+  <div class="completion-best"  id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 फिर खेलो! Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const TOTAL_ROUNDS = 10;
+
+let round        = 0;
+let mistakes     = 0;
+let answered     = false;
+let correctAnswer = 0;
+let frogPos      = 5;
+let currentPrompt = '';
+
+function hearAgain() { speakHindi(currentPrompt); }
+
+/* ── Build number line ── */
+function buildNumberLine() {
+  const track = document.getElementById('nl-track');
+  track.querySelectorAll('.nl-node').forEach(n => n.remove());
+
+  for (let i = 1; i <= 10; i++) {
+    const node = document.createElement('div');
+    node.className = 'nl-node';
+    node.id = `nl-node-${i}`;
+
+    const btn = document.createElement('button');
+    btn.className = 'nl-num-btn';
+    btn.id = `nl-btn-${i}`;
+    btn.textContent = i;
+    btn.setAttribute('aria-label', `Number ${i}`);
+    btn.addEventListener('click', () => handleNumberClick(i));
+
+    node.appendChild(btn);
+    track.appendChild(node);
+  }
+}
+
+/* ── Position frog above number n ── */
+function positionFrog(n, animate) {
+  const frog = document.getElementById('nl-frog');
+  const node = document.getElementById(`nl-node-${n}`);
+  if (!frog || !node) return;
+
+  const center = node.offsetLeft + node.offsetWidth / 2;
+  frog.style.left = center + 'px';
+
+  if (animate) {
+    frog.classList.remove('bounce-anim');
+    void frog.offsetWidth;
+    frog.classList.add('bounce-anim');
+  }
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.getElementById(`nl-btn-${i}`);
+    if (btn) btn.classList.toggle('current', i === n);
+  }
+  frogPos = n;
+}
+
+/* ── Generate a round ── */
+function nextRound() {
+  if (round >= TOTAL_ROUNDS) {
+    showCompletion('number-line', mistakes, TOTAL_ROUNDS);
+    return;
+  }
+  answered = false;
+  hideFeedback();
+  updateProgress(round, TOTAL_ROUNDS);
+
+  for (let i = 1; i <= 10; i++) {
+    const btn = document.getElementById(`nl-btn-${i}`);
+    if (btn) btn.classList.remove('correct', 'wrong');
+  }
+
+  const mode = round % 4;
+  let questionText = '';
+
+  if (mode === 0) {
+    // Jump to specific number
+    const n = 1 + Math.floor(Math.random() * 10);
+    correctAnswer = n;
+    questionText  = `🐸 को ${n} पर कूदाओ!\nJump to ${n}!`;
+    currentPrompt = `मेंढक को ${n} पर कूदाओ!`;
+
+  } else if (mode === 1) {
+    // What comes after N
+    const n = 1 + Math.floor(Math.random() * 9); // 1–9
+    correctAnswer = n + 1;
+    questionText  = `${n} के आगे कौन सा नंबर है?\nWhat comes after ${n}?`;
+    currentPrompt = `${n} के आगे कौन सा नंबर है?`;
+
+  } else if (mode === 2) {
+    // What comes before N
+    const n = 2 + Math.floor(Math.random() * 9); // 2–10
+    correctAnswer = n - 1;
+    questionText  = `${n} के पीछे कौन सा नंबर है?\nWhat comes before ${n}?`;
+    currentPrompt = `${n} के पीछे कौन सा नंबर है?`;
+
+  } else {
+    // Bigger of two numbers
+    let a = 1 + Math.floor(Math.random() * 9);
+    const bOptions = Array.from({length: 9}, (_, i) => i + 1).filter(n => n !== a);
+    let b = bOptions[Math.floor(Math.random() * bOptions.length)];
+    correctAnswer = Math.max(a, b);
+    questionText  = `${a} और ${b} में से बड़ा नंबर कौन सा है?\nWhich is bigger: ${a} or ${b}?`;
+    currentPrompt = `${a} और ${b} में से बड़ा नंबर कौन सा है?`;
+  }
+
+  document.getElementById('question-text').textContent = questionText;
+  setTimeout(() => speakHindi(currentPrompt), 300);
+}
+
+/* ── Handle tap on a number ── */
+function handleNumberClick(n) {
+  if (answered) return;
+
+  if (n === correctAnswer) {
+    answered = true;
+    const btn = document.getElementById(`nl-btn-${n}`);
+    btn.classList.add('correct');
+    positionFrog(n, true);
+
+    const banner = document.getElementById('feedback-banner');
+    banner.textContent = '🎉 शाबाश! Well done!';
+    banner.className = 'feedback-banner show correct-fb';
+
+    launchConfetti();
+    speakHindi('शाबाश!');
+    round++;
+
+    setTimeout(() => {
+      btn.classList.remove('correct');
+      hideFeedback();
+      nextRound();
+    }, 1500);
+
+  } else {
+    mistakes++;
+    const btn = document.getElementById(`nl-btn-${n}`);
+    btn.classList.add('wrong');
+
+    const frog = document.getElementById('nl-frog');
+    if (frog) {
+      const orig = frog.textContent;
+      frog.textContent = '😢';
+      setTimeout(() => { frog.textContent = orig; }, 750);
+    }
+
+    const banner = document.getElementById('feedback-banner');
+    banner.textContent = '❌ फिर से! Try again!';
+    banner.className = 'feedback-banner show wrong-fb';
+    speakHindi('फिर से!');
+
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      hideFeedback();
+    }, 850);
+  }
+}
+
+/* ── Init ── */
+function initGame() {
+  round    = 0;
+  mistakes = 0;
+  answered = false;
+  frogPos  = 5;
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  buildNumberLine();
+  // Allow layout to settle before positioning frog
+  setTimeout(() => positionFrog(frogPos, false), 80);
+  nextRound();
+}
+
+window.addEventListener('resize', () => positionFrog(frogPos, false));
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>

@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🥁 संगीत बनाओ · Music Maker · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .music-wrap {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0 12px 32px;
+  }
+
+  /* ===== Instruction line ===== */
+  .music-intro {
+    text-align: center;
+    font-size: clamp(1rem, 3vw, 1.2rem);
+    font-weight: 800;
+    color: #555;
+    padding: 10px 4px 4px;
+  }
+
+  /* ===== Pads Grid ===== */
+  .pads-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 16px 0;
+  }
+  .pad {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+    padding: 12px 6px;
+    min-height: 100px;
+    border: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.1s, box-shadow 0.1s;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pad:active { transform: scale(0.93); }
+  .pad .pad-emoji { font-size: clamp(2rem, 6vw, 2.6rem); line-height: 1; pointer-events: none; }
+  .pad .pad-hi    { font-size: clamp(0.65rem, 2vw, 0.8rem); font-weight: 800; color: #555; pointer-events: none; text-align: center; }
+  .pad .pad-en    { font-size: clamp(0.6rem, 1.8vw, 0.72rem); color: #888; pointer-events: none; text-align: center; }
+
+  /* Individual pad accent colours */
+  .pad-tabla     { border-color: #FF7043; }
+  .pad-dholak    { border-color: #FF8C00; }
+  .pad-bell      { border-color: #FFD700; }
+  .pad-clap      { border-color: #66BB6A; }
+  .pad-harmonium { border-color: #42A5F5; }
+  .pad-bansuri   { border-color: #26C6DA; }
+  .pad-shehnai   { border-color: #AB47BC; }
+  .pad-kartal    { border-color: #EC407A; }
+
+  .pad-tabla     { background: #FFF3F0; }
+  .pad-dholak    { background: #FFF8F0; }
+  .pad-bell      { background: #FFFDE7; }
+  .pad-clap      { background: #F1F8E9; }
+  .pad-harmonium { background: #E3F2FD; }
+  .pad-bansuri   { background: #E0F7FA; }
+  .pad-shehnai   { background: #F3E5F5; }
+  .pad-kartal    { background: #FCE4EC; }
+
+  /* ===== Ripple & Pulse animations ===== */
+  @keyframes pad-ripple {
+    0%   { transform: scale(0); opacity: 0.55; }
+    100% { transform: scale(4); opacity: 0; }
+  }
+  .pad-ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    top: 50%;
+    left: 50%;
+    margin-top: -30px;
+    margin-left: -30px;
+    animation: pad-ripple 0.5s ease-out forwards;
+    pointer-events: none;
+  }
+  @keyframes pad-pulse {
+    0%   { transform: scale(1); box-shadow: var(--shadow); }
+    30%  { transform: scale(1.07); }
+    60%  { transform: scale(0.97); }
+    100% { transform: scale(1); box-shadow: var(--shadow); }
+  }
+  .pad.playing { animation: pad-pulse 0.35s ease; }
+
+  /* ===== Transport Controls ===== */
+  .transport {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 6px 0 14px;
+    flex-wrap: wrap;
+  }
+  .transport-btn {
+    border: none;
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-size: clamp(0.95rem, 3vw, 1.1rem);
+    font-weight: 900;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+  .transport-btn:hover  { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+  .transport-btn:active { transform: scale(0.94); }
+  .transport-btn:disabled { opacity: 0.45; cursor: default; transform: none; }
+
+  .btn-record  { background: #F44336; color: #fff; }
+  .btn-stop    { background: #607D8B; color: #fff; }
+  .btn-play    { background: #4CAF50; color: #fff; }
+  .btn-clear   { background: #fff;    color: #888; border: 2px solid #ddd; }
+
+  /* Recording indicator */
+  .rec-indicator {
+    display: none;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #F44336;
+  }
+  .rec-indicator.active { display: flex; }
+  @keyframes blink-dot {
+    0%,100% { opacity: 1; }
+    50%      { opacity: 0; }
+  }
+  .rec-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #F44336;
+    animation: blink-dot 1s infinite;
+  }
+
+  /* ===== Playback indicator ===== */
+  .playback-bar {
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #4CAF50;
+    min-height: 22px;
+    padding: 2px 0 8px;
+  }
+
+  /* ===== Recorded notes strip ===== */
+  .notes-strip {
+    min-height: 36px;
+    background: #fff;
+    border-radius: 50px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 6px 14px;
+    font-size: 1.4rem;
+    letter-spacing: 3px;
+    text-align: center;
+    color: #333;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    transition: opacity 0.3s;
+    margin-bottom: 4px;
+  }
+  .notes-strip.empty { color: #ccc; font-size: 0.9rem; letter-spacing: 0; }
+
+  /* ===== Footer ===== */
+  .footer-btns {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    padding: 12px 0 4px;
+  }
+  .foot-btn {
+    background: #fff;
+    border: 3px solid #ddd;
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: transform 0.15s, box-shadow 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .foot-btn:hover  { transform: translateY(-2px); box-shadow: 0 5px 16px rgba(0,0,0,0.16); }
+  .foot-btn:active { transform: scale(0.95); }
+  .foot-btn.home-btn { border-color: var(--orange); color: var(--orange); }
+
+  /* Responsive: 2 columns on very small screens */
+  @media (max-width: 360px) {
+    .pads-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .pad { min-height: 90px; }
+  }
+  @media (min-width: 480px) {
+    .pad { min-height: 118px; }
+    .pad .pad-emoji { font-size: 3rem; }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🥁 Music Maker / संगीत बजाओ</h1>
+</header>
+
+<div class="music-wrap">
+
+  <p class="music-intro">👆 पैड को टैप करो · Tap the pads to play!</p>
+
+  <!-- Instrument Pads -->
+  <div class="pads-grid" id="pads-grid"></div>
+
+  <!-- Recorded notes display -->
+  <div class="notes-strip empty" id="notes-strip">No recording yet · अभी कोई रिकॉर्डिंग नहीं</div>
+
+  <!-- Transport Controls -->
+  <div class="transport">
+    <div class="rec-indicator" id="rec-indicator">
+      <span class="rec-dot"></span> REC
+    </div>
+    <button class="transport-btn btn-record" id="btn-record" onclick="startRecording()">🔴 Record</button>
+    <button class="transport-btn btn-stop"   id="btn-stop"   onclick="stopRecording()" disabled>⏹️ Stop</button>
+    <button class="transport-btn btn-play"   id="btn-play"   onclick="playRecording()"  disabled>▶️ Play</button>
+    <button class="transport-btn btn-clear"  id="btn-clear"  onclick="clearRecording()" disabled>🗑️ Clear</button>
+  </div>
+
+  <div class="playback-bar" id="playback-bar"></div>
+
+  <!-- Footer -->
+  <div class="footer-btns">
+    <button class="foot-btn home-btn" onclick="goHome()">🏠 Home</button>
+  </div>
+
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+// ===== Instrument Definitions =====
+const INSTRUMENTS = [
+  { id: 'tabla',     emoji: '🥁', hi: 'तबला',     en: 'Tabla',     color: '#FF7043' },
+  { id: 'dholak',    emoji: '🪘', hi: 'ढोलक',     en: 'Dholak',    color: '#FF8C00' },
+  { id: 'bell',      emoji: '🔔', hi: 'घंटी',     en: 'Bell',      color: '#FFD700' },
+  { id: 'clap',      emoji: '👏', hi: 'ताली',     en: 'Clap',      color: '#66BB6A' },
+  { id: 'harmonium', emoji: '🎵', hi: 'हारमोनियम', en: 'Harmonium', color: '#42A5F5' },
+  { id: 'bansuri',   emoji: '🪈', hi: 'बाँसुरी',  en: 'Bansuri',   color: '#26C6DA' },
+  { id: 'shehnai',   emoji: '🎺', hi: 'शहनाई',    en: 'Shehnai',   color: '#AB47BC' },
+  { id: 'kartal',    emoji: '🥄', hi: 'करताल',    en: 'Kartal',    color: '#EC407A' },
+];
+
+// ===== Audio Context (lazy init) =====
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  // Resume if suspended (autoplay policy)
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  return audioCtx;
+}
+
+// ===== Sound Generation =====
+function playSound(id) {
+  const ctx = getAudioCtx();
+  const now = ctx.currentTime;
+
+  switch (id) {
+    case 'tabla': {
+      // Sine 80 Hz, quick 0.3s decay with pitch drop
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, now);
+      osc.frequency.exponentialRampToValueAtTime(50, now + 0.18);
+      gain.gain.setValueAtTime(1.2, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.31);
+      break;
+    }
+    case 'dholak': {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(60, now + 0.25);
+      gain.gain.setValueAtTime(1.0, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.41);
+      break;
+    }
+    case 'bell': {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      gain.gain.setValueAtTime(0.8, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 1.0);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 1.01);
+      break;
+    }
+    case 'clap': {
+      // White noise burst
+      const bufferSize = Math.floor(ctx.sampleRate * 0.15);
+      const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
+      }
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(1.5, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+      src.connect(gain);
+      gain.connect(ctx.destination);
+      src.start(now);
+      break;
+    }
+    case 'harmonium': {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(320, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.4, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.51);
+      break;
+    }
+    case 'bansuri': {
+      // Sine 440Hz with vibrato
+      const osc = ctx.createOscillator();
+      const lfo = ctx.createOscillator();
+      const lfoGain = ctx.createGain();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      lfo.type = 'sine';
+      lfo.frequency.setValueAtTime(5, now);
+      lfoGain.gain.setValueAtTime(8, now);
+      lfo.connect(lfoGain);
+      lfoGain.connect(osc.frequency);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.6, now + 0.05);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.61);
+      lfo.start(now);
+      lfo.stop(now + 0.61);
+      break;
+    }
+    case 'shehnai': {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(560, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.35, now + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.51);
+      break;
+    }
+    case 'kartal': {
+      // Triangle with a click at the start
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(600, now);
+      gain.gain.setValueAtTime(1.0, now);
+      gain.gain.exponentialRampToValueAtTime(0.2, now + 0.02);
+      gain.gain.setValueAtTime(0.2, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.31);
+      break;
+    }
+  }
+}
+
+// ===== Build Pads =====
+function buildPads() {
+  const grid = document.getElementById('pads-grid');
+  grid.innerHTML = '';
+  INSTRUMENTS.forEach(inst => {
+    const pad = document.createElement('div');
+    pad.className = `pad pad-${inst.id}`;
+    pad.id = `pad-${inst.id}`;
+    pad.setAttribute('role', 'button');
+    pad.setAttribute('aria-label', inst.hi + ' ' + inst.en);
+    pad.innerHTML = `
+      <span class="pad-emoji">${inst.emoji}</span>
+      <span class="pad-hi">${inst.hi}</span>
+      <span class="pad-en">${inst.en}</span>
+    `;
+    pad.addEventListener('click', () => handlePadTap(inst, pad));
+    // Touch support
+    pad.addEventListener('touchstart', (e) => { e.preventDefault(); handlePadTap(inst, pad); }, { passive: false });
+    grid.appendChild(pad);
+  });
+}
+
+// ===== Handle Pad Tap =====
+function handlePadTap(inst, padEl) {
+  playSound(inst.id);
+  triggerPadVisual(padEl, inst.color);
+  if (isRecording) {
+    const t = Date.now() - recordingStart;
+    recordedNotes.push({ id: inst.id, emoji: inst.emoji, t });
+    updateNotesStrip();
+  }
+}
+
+function triggerPadVisual(padEl, color) {
+  // Remove any existing animation then re-add
+  padEl.classList.remove('playing');
+  void padEl.offsetWidth; // reflow
+  padEl.classList.add('playing');
+  padEl.addEventListener('animationend', () => padEl.classList.remove('playing'), { once: true });
+
+  // Ripple
+  const ripple = document.createElement('div');
+  ripple.className = 'pad-ripple-effect';
+  ripple.style.background = color + '55';
+  padEl.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 520);
+}
+
+// ===== Recording =====
+let isRecording = false;
+let recordingStart = 0;
+let recordedNotes = [];
+let playbackTimer = null;
+
+function startRecording() {
+  isRecording = true;
+  recordingStart = Date.now();
+  recordedNotes = [];
+  updateNotesStrip();
+
+  document.getElementById('rec-indicator').classList.add('active');
+  document.getElementById('btn-record').disabled = true;
+  document.getElementById('btn-stop').disabled = false;
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-clear').disabled = true;
+  document.getElementById('playback-bar').textContent = '';
+}
+
+function stopRecording() {
+  isRecording = false;
+  document.getElementById('rec-indicator').classList.remove('active');
+  document.getElementById('btn-record').disabled = false;
+  document.getElementById('btn-stop').disabled = true;
+  document.getElementById('btn-play').disabled = recordedNotes.length === 0;
+  document.getElementById('btn-clear').disabled = recordedNotes.length === 0;
+
+  if (recordedNotes.length > 0) {
+    document.getElementById('playback-bar').textContent = `${recordedNotes.length} notes recorded · ${recordedNotes.length} नोट्स रिकॉर्ड हुए`;
+  }
+}
+
+function playRecording() {
+  if (recordedNotes.length === 0) return;
+
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-record').disabled = true;
+  document.getElementById('playback-bar').textContent = '▶️ Playing... · बज रहा है...';
+
+  const start = Date.now();
+  const lastNote = recordedNotes[recordedNotes.length - 1];
+  const totalDuration = lastNote.t + 600;
+
+  recordedNotes.forEach(note => {
+    playbackTimer = setTimeout(() => {
+      playSound(note.id);
+      const padEl = document.getElementById(`pad-${note.id}`);
+      const inst = INSTRUMENTS.find(i => i.id === note.id);
+      if (padEl && inst) triggerPadVisual(padEl, inst.color);
+    }, note.t);
+  });
+
+  setTimeout(() => {
+    document.getElementById('btn-play').disabled = false;
+    document.getElementById('btn-record').disabled = false;
+    document.getElementById('playback-bar').textContent = '✅ Done! · हो गया!';
+    setTimeout(() => {
+      document.getElementById('playback-bar').textContent = '';
+    }, 1800);
+  }, totalDuration);
+}
+
+function clearRecording() {
+  recordedNotes = [];
+  document.getElementById('btn-play').disabled = true;
+  document.getElementById('btn-clear').disabled = true;
+  document.getElementById('playback-bar').textContent = '';
+  updateNotesStrip();
+}
+
+function updateNotesStrip() {
+  const strip = document.getElementById('notes-strip');
+  if (recordedNotes.length === 0) {
+    strip.textContent = 'No recording yet · अभी कोई रिकॉर्डिंग नहीं';
+    strip.classList.add('empty');
+  } else {
+    strip.textContent = recordedNotes.map(n => n.emoji).join(' ');
+    strip.classList.remove('empty');
+  }
+}
+
+// ===== Init =====
+function init() {
+  buildPads();
+  setTimeout(() => speakHindi('संगीत बजाओ!'), 600);
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

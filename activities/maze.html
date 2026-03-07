@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Maze 🐄 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+  .maze-header-area {
+    text-align: center;
+    padding: 16px 16px 6px;
+  }
+  .maze-title-text {
+    font-size: clamp(1.2rem, 3.5vw, 1.7rem);
+    font-weight: 800;
+    color: #333;
+    margin-bottom: 4px;
+  }
+  .maze-subtitle {
+    font-size: 0.88rem;
+    color: #888;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .maze-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    padding: 6px 16px 4px;
+    flex-wrap: wrap;
+  }
+  .maze-label-pill {
+    background: #FFF8E1;
+    border: 2px solid #FFD700;
+    border-radius: 50px;
+    padding: 6px 20px;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #795548;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+  .wrong-pill {
+    background: #FFEBEE;
+    border: 2px solid #EF9A9A;
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #C62828;
+  }
+  .maze-legend {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    padding: 4px 16px 2px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+    color: #666;
+    font-weight: 700;
+  }
+  .legend-item-m {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-swatch-m {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
+  }
+  .maze-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px 16px 6px;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .maze-grid {
+    display: grid;
+    user-select: none;
+    -webkit-user-select: none;
+    gap: 4px;
+  }
+  .maze-cell {
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.18s;
+    cursor: default;
+    flex-shrink: 0;
+  }
+  .maze-cell.wall {
+    background: #795548;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.35);
+  }
+  .maze-cell.path {
+    background: #FFF8E1;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .maze-cell.visited {
+    background: #4CAF50 !important;
+    box-shadow: 0 2px 8px rgba(76,175,80,0.35) !important;
+  }
+  .maze-cell.wall-flash {
+    animation: maze-shake 0.42s ease;
+    background: #EF5350 !important;
+  }
+  @keyframes maze-shake {
+    0%,100% { transform: translate(0,0); }
+    15%      { transform: translate(-6px,0); }
+    30%      { transform: translate(6px,0); }
+    50%      { transform: translate(-4px,0); }
+    70%      { transform: translate(4px,0); }
+    85%      { transform: translate(-2px,0); }
+  }
+  .maze-controls {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    padding: 8px 16px 16px;
+  }
+  .maze-reset-btn {
+    background: linear-gradient(135deg, #9C27B0, #673AB7);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 10px 28px;
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(156,39,176,0.28);
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .maze-reset-btn:hover  { transform: scale(1.05); box-shadow: 0 6px 18px rgba(156,39,176,0.38); }
+  .maze-reset-btn:active { transform: scale(0.97); }
+  .touch-hint {
+    text-align: center;
+    font-size: 0.8rem;
+    color: #aaa;
+    padding: 0 16px 4px;
+    font-style: italic;
+  }
+  .maze-complete-flash {
+    animation: maze-complete-anim 0.5s ease;
+  }
+  @keyframes maze-complete-anim {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🐄 माज़ · Maze</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/6</span>
+</header>
+
+<div id="game-area">
+  <div class="maze-header-area">
+    <p class="maze-title-text">गाय को घास तक पहुंचाओ! 🐄🌾</p>
+    <p class="maze-subtitle">Lead the cow to the grass!</p>
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+  </div>
+
+  <div class="maze-status-row">
+    <span class="maze-label-pill" id="maze-label">माज़ #1 / 6</span>
+    <span class="wrong-pill">❌ <span id="wrong-count">0</span> गलत मोड़ (wrong turns)</span>
+  </div>
+
+  <div class="maze-legend">
+    <div class="legend-item-m">
+      <div class="legend-swatch-m" style="background:#FFF8E1;border-color:#ddd;"></div>रास्ता / Path
+    </div>
+    <div class="legend-item-m">
+      <div class="legend-swatch-m" style="background:#795548;"></div>दीवार / Wall
+    </div>
+    <div class="legend-item-m">
+      <div class="legend-swatch-m" style="background:#4CAF50;"></div>✅ सही / Traced
+    </div>
+  </div>
+
+  <div id="feedback-banner" class="feedback-banner"></div>
+
+  <div class="maze-container" id="maze-container">
+    <div class="maze-grid" id="maze-grid"></div>
+  </div>
+
+  <p class="touch-hint">👆 उंगली से रास्ता बनाओ · Drag from 🐄 to 🌾</p>
+
+  <div class="maze-controls">
+    <button class="maze-reset-btn" onclick="resetCurrentMaze()">🔄 फिर से / Reset</button>
+  </div>
+</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div style="font-size:4rem;margin:8px 0;">🐄💨🌾</div>
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title"  id="completion-title"></div>
+  <div class="completion-score"  id="completion-score"></div>
+  <div class="completion-best"   id="completion-best"></div>
+  <button class="play-again-btn" onclick="restartGame()">🔄 फिर खेलो! Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+// ─── Maze Definitions ────────────────────────────────────────────────────────
+// 1 = path, 0 = wall. Start always (0,0), end always (size-1, size-1).
+const MAZES = [
+  { size: 3, grid: [[1,1,0],[0,1,0],[0,1,1]] },
+  { size: 3, grid: [[1,0,0],[1,1,0],[0,1,1]] },
+  { size: 4, grid: [[1,1,0,0],[0,1,0,0],[0,1,1,0],[0,0,1,1]] },
+  { size: 4, grid: [[1,0,0,0],[1,1,0,0],[0,1,1,0],[0,0,1,1]] },
+  { size: 5, grid: [[1,1,0,0,0],[0,1,0,0,0],[0,1,1,0,0],[0,0,1,1,0],[0,0,0,1,1]] },
+  { size: 5, grid: [[1,0,0,0,0],[1,1,0,0,0],[0,1,0,0,0],[0,1,1,1,0],[0,0,0,1,1]] },
+];
+
+// ─── State ───────────────────────────────────────────────────────────────────
+let currentMazeIdx = 0;
+let wrongTurns     = 0;
+let tracing        = false;
+let tracedPath     = []; // [{row, col}]
+let shaking        = false;
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function hearAgain() { speakHindi('गाय को घास तक पहुंचाओ!'); }
+function getMaze()   { return MAZES[currentMazeIdx]; }
+function startCell() { return { row: 0, col: 0 }; }
+function endCell()   { const s = getMaze().size; return { row: s - 1, col: s - 1 }; }
+function sameCell(a, b) { return a.row === b.row && a.col === b.col; }
+function adjacent(a, b) {
+  const dr = Math.abs(a.row - b.row);
+  const dc = Math.abs(a.col - b.col);
+  return (dr === 0 && dc === 1) || (dr === 1 && dc === 0);
+}
+
+function computeCellSize(mazeSize) {
+  const container = document.getElementById('maze-container');
+  const availW = (container ? container.clientWidth : window.innerWidth) - 32;
+  const availH = window.innerHeight * 0.47;
+  const gap    = 4;
+  const fromW  = (availW - gap * (mazeSize - 1)) / mazeSize;
+  const fromH  = (availH - gap * (mazeSize - 1)) / mazeSize;
+  return Math.max(52, Math.min(fromW, fromH, 96));
+}
+
+// ─── Render ──────────────────────────────────────────────────────────────────
+function renderMaze() {
+  const maze     = getMaze();
+  const cellSize = computeCellSize(maze.size);
+  const emojiPx  = Math.max(20, Math.round(cellSize * 0.54));
+  const start    = startCell();
+  const end      = endCell();
+  const grid     = document.getElementById('maze-grid');
+
+  grid.style.gridTemplateColumns = `repeat(${maze.size}, ${cellSize}px)`;
+  grid.style.gap = '4px';
+  grid.innerHTML = '';
+
+  for (let r = 0; r < maze.size; r++) {
+    for (let c = 0; c < maze.size; c++) {
+      const el   = document.createElement('div');
+      const wall = maze.grid[r][c] === 0;
+      el.className        = 'maze-cell ' + (wall ? 'wall' : 'path');
+      el.style.width      = cellSize + 'px';
+      el.style.height     = cellSize + 'px';
+      el.style.fontSize   = emojiPx  + 'px';
+      el.dataset.row      = r;
+      el.dataset.col      = c;
+      if (r === start.row && c === start.col) el.textContent = '🐄';
+      else if (r === end.row && c === end.col) el.textContent = '🌾';
+      grid.appendChild(el);
+    }
+  }
+
+  document.getElementById('maze-label').textContent  = `माज़ #${currentMazeIdx + 1} / 6`;
+  document.getElementById('score-display').textContent = `${currentMazeIdx}/6`;
+  document.getElementById('wrong-count').textContent  = wrongTurns;
+  updateProgress(currentMazeIdx, 6);
+}
+
+function getCellEl(r, c) {
+  return document.querySelector(`.maze-cell[data-row="${r}"][data-col="${c}"]`);
+}
+
+function getCellFromPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  const cell = el.classList.contains('maze-cell') ? el : el.closest('.maze-cell');
+  if (!cell || !cell.dataset.row) return null;
+  return { row: parseInt(cell.dataset.row), col: parseInt(cell.dataset.col), el: cell };
+}
+
+// ─── Pointer Events ──────────────────────────────────────────────────────────
+function setupEvents() {
+  const grid = document.getElementById('maze-grid');
+  grid.addEventListener('pointerdown',   onDown,   { passive: false });
+  grid.addEventListener('pointermove',   onMove,   { passive: false });
+  grid.addEventListener('pointerup',     onUp,     { passive: false });
+  grid.addEventListener('pointercancel', onUp,     { passive: false });
+  grid.addEventListener('pointerleave',  onLeave,  { passive: false });
+}
+
+function onDown(e) {
+  e.preventDefault();
+  const cell  = getCellFromPoint(e.clientX, e.clientY);
+  if (!cell) return;
+  const s = startCell();
+  if (cell.row === s.row && cell.col === s.col) {
+    tracing    = true;
+    tracedPath = [{ row: cell.row, col: cell.col }];
+    cell.el.classList.add('visited');
+    try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+}
+
+function onMove(e) {
+  if (!tracing || shaking) return;
+  e.preventDefault();
+  const cell = getCellFromPoint(e.clientX, e.clientY);
+  if (!cell) return;
+
+  const last = tracedPath[tracedPath.length - 1];
+  if (sameCell(last, cell)) return;
+  if (!adjacent(last, cell)) return;
+
+  const maze       = getMaze();
+  const alreadyIdx = tracedPath.findIndex(tc => sameCell(tc, cell));
+
+  if (alreadyIdx !== -1) {
+    // Backtrack: trim path after this cell
+    const end     = endCell();
+    const removed = tracedPath.splice(alreadyIdx + 1);
+    removed.forEach(tc => {
+      const el = getCellEl(tc.row, tc.col);
+      if (el) {
+        el.classList.remove('visited');
+        if (sameCell(tc, end)) el.textContent = '🌾';
+      }
+    });
+    return;
+  }
+
+  if (maze.grid[cell.row][cell.col] === 0) {
+    // Wall hit
+    wrongTurns++;
+    document.getElementById('wrong-count').textContent = wrongTurns;
+    shaking = true;
+    cell.el.classList.add('wall-flash');
+    speakHindi('दूसरा रास्ता आज़माओ!');
+    tracing = false;
+    setTimeout(() => {
+      cell.el.classList.remove('wall-flash');
+      shaking = false;
+      clearTrace();
+    }, 460);
+    return;
+  }
+
+  // Valid path cell
+  tracedPath.push({ row: cell.row, col: cell.col });
+  cell.el.classList.add('visited');
+
+  // Check win condition
+  const end = endCell();
+  if (sameCell(cell, end)) {
+    tracing = false;
+    onMazeComplete();
+  }
+}
+
+function onUp(e)    { tracing = false; }
+function onLeave(e) { tracing = false; }
+
+// ─── Maze Logic ──────────────────────────────────────────────────────────────
+function clearTrace() {
+  const end = endCell();
+  tracedPath.forEach(tc => {
+    const el = getCellEl(tc.row, tc.col);
+    if (el) {
+      el.classList.remove('visited');
+      if (sameCell(tc, end)) el.textContent = '🌾';
+    }
+  });
+  tracedPath = [];
+}
+
+function onMazeComplete() {
+  speakHindi('शाबाश! अगला माज़!');
+  // Flash the completed maze
+  const grid = document.getElementById('maze-grid');
+  grid.classList.add('maze-complete-flash');
+  setTimeout(() => grid.classList.remove('maze-complete-flash'), 500);
+
+  currentMazeIdx++;
+  updateProgress(currentMazeIdx, 6);
+  document.getElementById('score-display').textContent = `${currentMazeIdx}/6`;
+
+  if (currentMazeIdx >= MAZES.length) {
+    setTimeout(finishGame, 700);
+  } else {
+    setTimeout(() => {
+      tracedPath = [];
+      renderMaze();
+    }, 700);
+  }
+}
+
+function resetCurrentMaze() {
+  clearTrace();
+  tracing  = false;
+  shaking  = false;
+  renderMaze();
+}
+
+// ─── Completion ──────────────────────────────────────────────────────────────
+function calcMazeStars() {
+  if (wrongTurns === 0) return 3;
+  if (wrongTurns <= 5)  return 2;
+  return 1;
+}
+
+function finishGame() {
+  const stars = calcMazeStars();
+  saveBestScore('maze', stars);
+  const best  = getBestScore('maze');
+
+  document.getElementById('game-area').classList.add('hidden');
+  document.getElementById('completion-screen').classList.add('show');
+  document.getElementById('completion-stars').textContent = starsHTML(stars);
+
+  let msg;
+  if (stars === 3)      { msg = '🎊 शानदार! Excellent!';    speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!'); }
+  else if (stars === 2) { msg = '�� बहुत अच्छा! Very Good!'; speakHindi('बहुत अच्छा! तुमने दो सितारे कमाए!'); }
+  else                  { msg = '💪 अच्छा प्रयास! Good Try!'; speakHindi('अच्छा प्रयास! एक सितारा!'); }
+
+  document.getElementById('completion-title').textContent = msg;
+  document.getElementById('completion-score').textContent = `गलत मोड़ / Wrong turns: ${wrongTurns}`;
+  document.getElementById('completion-best').textContent  = 'Best: ' + starsHTML(best);
+  launchConfetti();
+}
+
+function restartGame() {
+  currentMazeIdx = 0;
+  wrongTurns     = 0;
+  tracedPath     = [];
+  tracing        = false;
+  shaking        = false;
+
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  renderMaze();
+  speakHindi('गाय को घास तक पहुंचाओ!');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  renderMaze();
+  setupEvents();
+  speakHindi('गाय को घास तक पहुंचाओ!');
+
+  // Re-render on resize to adjust cell sizes
+  window.addEventListener('resize', () => {
+    if (!document.getElementById('completion-screen').classList.contains('show')) {
+      renderMaze();
+    }
+  });
+});
+</script>
+</body>
+</html>
