@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sound Bingo 🔊 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+#clue-box {
+  text-align: center;
+  font-size: 1.4rem;
+  font-weight: 700;
+  background: #fff3cd;
+  border-radius: var(--radius);
+  padding: 1rem 1.5rem;
+  margin: 0 auto 1rem;
+  max-width: 600px;
+  box-shadow: var(--shadow);
+}
+#clue-box .clue-hi { font-size: 1.5rem; color: #555; }
+.hear-btn {
+  display: block;
+  margin: 0 auto 1.2rem;
+  font-size: 1.6rem;
+  padding: 0.5rem 1.6rem;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+}
+.hear-btn:hover { opacity: 0.88; }
+.bingo-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0.5rem;
+}
+@media (min-width: 480px)  { .bingo-grid { grid-template-columns: repeat(3, 1fr); } }
+@media (min-width: 700px)  { .bingo-grid { grid-template-columns: repeat(4, 1fr); } }
+.bingo-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-size: 4rem;
+  min-height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  border: 3px solid transparent;
+  user-select: none;
+}
+.bingo-card:hover  { transform: scale(1.08); }
+.bingo-card.correct { background: #c8f7c5; border-color: var(--green); animation: pop .35s ease; }
+.bingo-card.wrong   { background: #ffd6d6; border-color: var(--red);   animation: shake .4s ease; }
+@keyframes pop   { 0%{transform:scale(1)} 50%{transform:scale(1.25)} 100%{transform:scale(1)} }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🔊 Sound Bingo</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/10</span>
+</header>
+
+<div id="game-area">
+  <div id="clue-box">
+    <div class="clue-hi" id="clue-text">...</div>
+  </div>
+  <button class="hear-btn" onclick="hearAgain()">🔊 सुनो फिर से / Hear Again</button>
+  <div id="feedback-banner" class="feedback-banner"></div>
+  <div class="bingo-grid" id="bingo-grid"></div>
+</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title" id="completion-title"></div>
+  <div class="completion-score" id="completion-score"></div>
+  <div class="completion-best"  id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 फिर खेलो / Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const ROUNDS = [
+  { clue:'मू मू कौन करता है?',         correct:'🐄', options:['🐄','🐕','🐱','🐦'] },
+  { clue:'भौं भौं कौन करता है?',        correct:'🐕', options:['🐄','🐕','🐱','🐸'] },
+  { clue:'म्याऊं म्याऊं कौन करता है?', correct:'🐱', options:['🐄','🐕','🐱','🐦'] },
+  { clue:'पों पों कौन करता है?',        correct:'🚗', options:['🚗','🚂','🚲','✈️'] },
+  { clue:'छुक छुक कौन चलती है?',        correct:'🚂', options:['🚗','🚂','🚲','🚢'] },
+  { clue:'कौन उड़ता है?',               correct:'🦅', options:['🦅','🐟','🐄','🐘'] },
+  { clue:'कौन तैरता है?',               correct:'🐟', options:['🦅','🐟','🐄','🐘'] },
+  { clue:'बारिश में क्या खुलता है?',   correct:'☂️', options:['🕶️','☂️','🧥','👒'] },
+  { clue:'दूध कौन देता है?',            correct:'🐄', options:['🐄','🐘','🦚','🐅'] },
+  { clue:'कौन रात में जगता है?',        correct:'🦉', options:['🦉','🐄','🐓','🐑'] },
+];
+
+const TOTAL = 10;
+let round = 0, mistakes = 0, answered = false, currentClue = '';
+
+function hearAgain() { if (currentClue) speakHindi(currentClue); }
+
+function initGame() {
+  round = 0; mistakes = 0; answered = false;
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  nextRound();
+}
+
+function hideFeedback() {
+  const fb = document.getElementById('feedback-banner');
+  if (fb) { fb.textContent = ''; fb.className = 'feedback-banner'; }
+}
+
+function nextRound() {
+  if (round >= TOTAL) { showCompletion('sound-bingo', mistakes, TOTAL); return; }
+  answered = false;
+  hideFeedback();
+  updateProgress(round, TOTAL);
+  document.getElementById('score-display').textContent = round + '/' + TOTAL;
+
+  const r = ROUNDS[round];
+  currentClue = r.clue;
+  document.getElementById('clue-text').textContent = r.clue;
+
+  const opts = shuffle(r.options.slice());
+  const grid = document.getElementById('bingo-grid');
+  grid.innerHTML = '';
+  opts.forEach(emoji => {
+    const card = document.createElement('button');
+    card.className = 'bingo-card';
+    card.setAttribute('aria-label', emoji);
+    card.textContent = emoji;
+    card.onclick = () => handleTap(card, emoji, r.correct);
+    grid.appendChild(card);
+  });
+
+  setTimeout(() => speakHindi(r.clue), 300);
+}
+
+function handleTap(card, emoji, correct) {
+  if (answered) return;
+  if (emoji === correct) {
+    answered = true;
+    card.classList.add('correct');
+    showFeedback(true, 'बिल्कुल सही! 🎉 / Correct!');
+    launchConfetti();
+    round++;
+    setTimeout(() => { card.classList.remove('correct'); nextRound(); }, 1600);
+  } else {
+    mistakes++;
+    card.classList.add('wrong');
+    showFeedback(false, 'सुनो फिर से! 👂 / Listen again!');
+    setTimeout(() => {
+      card.classList.remove('wrong');
+      speakHindi(currentClue);
+    }, 1000);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>

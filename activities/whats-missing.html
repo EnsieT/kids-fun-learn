@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>What's Missing? 🔍 · Kids Fun Learn</title>
+<link rel="stylesheet" href="../css/style.css"/>
+<style>
+#phase-label {
+  text-align: center;
+  font-size: 1.45rem;
+  font-weight: 800;
+  margin-bottom: 0.6rem;
+  color: var(--purple);
+}
+#countdown {
+  text-align: center;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: var(--orange);
+  min-height: 2.6rem;
+}
+.scene-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.9rem;
+  margin: 0.8rem auto;
+  max-width: 600px;
+  padding: 0 0.5rem;
+}
+.scene-item {
+  font-size: 5rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s;
+}
+.scene-item.pop { animation: popIn .4s ease; }
+@keyframes popIn { 0%{transform:scale(0)} 70%{transform:scale(1.2)} 100%{transform:scale(1)} }
+
+#sparkle-overlay {
+  position: fixed; inset: 0;
+  background: rgba(255,255,255,0.85);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 5rem;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+#sparkle-overlay.show { opacity: 1; }
+
+.answer-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.9rem;
+  margin: 0.8rem auto;
+  max-width: 560px;
+}
+.answer-btn {
+  font-size: 4rem;
+  width: 100px;
+  height: 100px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  display: flex; align-items: center; justify-content: center;
+}
+.answer-btn:hover  { transform: scale(1.1); }
+.answer-btn.correct { background: #c8f7c5; border-color: var(--green); animation: popIn .35s ease; }
+.answer-btn.wrong   { background: #ffd6d6; border-color: var(--red); animation: shake .4s ease; }
+@keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-8px)} 75%{transform:translateX(8px)} }
+</style>
+</head>
+<body>
+<canvas id="confetti-canvas"></canvas>
+
+<header class="activity-header">
+  <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
+  <h1>🔍 What's Missing?</h1>
+  <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
+  <span class="score-display" id="score-display">0/10</span>
+</header>
+
+<div id="game-area">
+  <div id="phase-label">देखो और याद करो! 👀</div>
+  <div id="countdown"></div>
+  <div id="feedback-banner" class="feedback-banner"></div>
+  <div id="scene-grid" class="scene-grid"></div>
+  <div id="answer-grid" class="answer-grid" style="display:none"></div>
+</div>
+
+<div id="sparkle-overlay">✨</div>
+
+<div id="completion-screen" class="completion-screen">
+  <div class="completion-stars" id="completion-stars"></div>
+  <div class="completion-title" id="completion-title"></div>
+  <div class="completion-score" id="completion-score"></div>
+  <div class="completion-best"  id="completion-best"></div>
+  <button class="play-again-btn" onclick="initGame()">🔄 फिर खेलो / Play Again</button>
+</div>
+
+<script src="../js/common.js"></script>
+<script>
+const ROUNDS = [
+  { scene:['🥭','🍌','🍎','🥥'],                  missing:'🍌', distractors:['🍇','🍊'] },
+  { scene:['🐄','🦚','🐘','🐅'],                  missing:'🦚', distractors:['🦜','🐒'] },
+  { scene:['🪔','🎆','🌺','🧨'],                  missing:'🎆', distractors:['🎁','🕯️'] },
+  { scene:['📚','✏️','🎒','📐'],                  missing:'📐', distractors:['🖍️','✂️'] },
+  { scene:['🍳','🥄','🍽️','🫖'],                 missing:'🥄', distractors:['🥛','🧂'] },
+  { scene:['🥭','🍌','🍎','🥥','🍇','🍊'],        missing:'🍊', distractors:['🍋','🍓'] },
+  { scene:['🐄','🦚','🐘','🐅','🦜','🐒'],        missing:'🐘', distractors:['🐺','🐓'] },
+  { scene:['📚','✏️','🎒','📐','🖍️','✂️'],        missing:'🎒', distractors:['🖊️','📏'] },
+  { scene:['🪔','🎆','🌺','🧨','🎁','🕯️'],        missing:'🎁', distractors:['🎊','💫'] },
+  { scene:['🍳','🥄','🍽️','🫖','🥛','🧂'],        missing:'🍳', distractors:['🥘','🥡'] },
+];
+
+const TOTAL = 10;
+let round = 0, mistakes = 0, phase = 'show', answered = false;
+let countdownTimer = null;
+
+function hideFeedback() {
+  const fb = document.getElementById('feedback-banner');
+  if (fb) { fb.textContent = ''; fb.className = 'feedback-banner'; }
+}
+
+function initGame() {
+  round = 0; mistakes = 0; answered = false;
+  document.getElementById('completion-screen').classList.remove('show');
+  document.getElementById('game-area').classList.remove('hidden');
+  hideFeedback();
+  nextRound();
+}
+
+function nextRound() {
+  if (round >= TOTAL) { showCompletion('whats-missing', mistakes, TOTAL); return; }
+  answered = false;
+  hideFeedback();
+  updateProgress(round, TOTAL);
+  document.getElementById('score-display').textContent = round + '/' + TOTAL;
+  startShowPhase();
+}
+
+function startShowPhase() {
+  const r = ROUNDS[round];
+  document.getElementById('phase-label').textContent = 'देखो और याद करो! 👀 / Look and remember!';
+  document.getElementById('answer-grid').style.display = 'none';
+  renderScene(r.scene);
+  speakHindi('देखो और याद करो');
+  runCountdown(3, () => startSparklePhase());
+}
+
+function runCountdown(n, cb) {
+  const el = document.getElementById('countdown');
+  el.textContent = n;
+  if (n <= 0) { el.textContent = ''; cb(); return; }
+  countdownTimer = setTimeout(() => runCountdown(n - 1, cb), 1000);
+}
+
+function startSparklePhase() {
+  const overlay = document.getElementById('sparkle-overlay');
+  overlay.classList.add('show');
+  document.getElementById('scene-grid').innerHTML = '';
+  document.getElementById('countdown').textContent = '';
+  setTimeout(() => { overlay.classList.remove('show'); startAskPhase(); }, 900);
+}
+
+function startAskPhase() {
+  const r = ROUNDS[round];
+  document.getElementById('phase-label').textContent = 'क्या गायब है? 🔍 / What\'s missing?';
+  speakHindi('क्या गायब है');
+  const visible = r.scene.filter(e => e !== r.missing);
+  renderScene(visible);
+  renderAnswers(r);
+}
+
+function renderScene(items) {
+  const grid = document.getElementById('scene-grid');
+  grid.innerHTML = '';
+  items.forEach(e => {
+    const div = document.createElement('div');
+    div.className = 'scene-item';
+    div.textContent = e;
+    grid.appendChild(div);
+  });
+}
+
+function renderAnswers(r) {
+  const sceneSet = new Set(r.scene);
+  const distrs = r.distractors.filter(d => !sceneSet.has(d));
+  const options = shuffle([r.missing, ...distrs.slice(0, 3)]);
+  const grid = document.getElementById('answer-grid');
+  grid.innerHTML = '';
+  grid.style.display = 'flex';
+  options.forEach(emoji => {
+    const btn = document.createElement('button');
+    btn.className = 'answer-btn';
+    btn.setAttribute('aria-label', emoji);
+    btn.textContent = emoji;
+    btn.onclick = () => handleAnswer(btn, emoji, r.missing);
+    grid.appendChild(btn);
+  });
+}
+
+function handleAnswer(btn, emoji, missing) {
+  if (answered) return;
+  if (emoji === missing) {
+    answered = true;
+    btn.classList.add('correct');
+    showFeedback(true, 'शाबाश! 🎉 ' + missing + ' गायब था! / Well done!');
+    launchConfetti();
+    speakHindi('शाबाश! ' + missing + ' गायब था');
+    // pop missing item back into scene
+    const grid = document.getElementById('scene-grid');
+    const item = document.createElement('div');
+    item.className = 'scene-item pop';
+    item.textContent = missing;
+    grid.appendChild(item);
+    round++;
+    setTimeout(() => { btn.classList.remove('correct'); nextRound(); }, 2000);
+  } else {
+    mistakes++;
+    btn.classList.add('wrong');
+    showFeedback(false, 'ध्यान से देखो! 👀 / Look carefully!');
+    speakHindi('ध्यान से देखो');
+    document.getElementById('answer-grid').style.display = 'none';
+    renderScene(ROUNDS[round].scene);
+    setTimeout(() => {
+      btn.classList.remove('wrong');
+      const visible = ROUNDS[round].scene.filter(e => e !== ROUNDS[round].missing);
+      renderScene(visible);
+      document.getElementById('answer-grid').style.display = 'flex';
+      hideFeedback();
+    }, 2000);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', initGame);
+</script>
+</body>
+</html>
