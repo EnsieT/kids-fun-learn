@@ -1,7 +1,20 @@
 /**
  * common.js — Shared utilities for Kids Fun Learn
- * Confetti, feedback, grading, localStorage helpers
+ * Confetti, feedback, grading, localStorage helpers, speech
  */
+
+/* ===== Speech (Web Speech API) ===== */
+function speak(text, lang) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang  = lang || 'hi-IN';
+  utter.rate  = 0.85;
+  utter.pitch = 1.1;
+  setTimeout(() => window.speechSynthesis.speak(utter), 150);
+}
+function speakHindi(text)   { speak(text, 'hi-IN'); }
+function speakEnglish(text) { speak(text, 'en-IN'); }
 
 /* ===== Confetti ===== */
 const CONFETTI_COLORS = ['#FFD700','#FF8C00','#FF69B4','#4CAF50','#2196F3','#9C27B0','#F44336'];
@@ -67,9 +80,11 @@ function showFeedback(correct) {
     banner.textContent = '🎉 शाबाश! Well done!';
     banner.classList.add('show', 'correct-fb');
     launchConfetti();
+    speakHindi('शाबाश!');
   } else {
     banner.textContent = '❌ फिर से कोशिश करो! Try again!';
     banner.classList.add('show', 'wrong-fb');
+    speakHindi('फिर से कोशिश करो!');
   }
 }
 
@@ -135,9 +150,16 @@ function showCompletion(activity, mistakes, total) {
 
   if (starsEl) starsEl.textContent = starsHTML(stars);
   if (titleEl) {
-    if (stars === 3) titleEl.textContent = '🎊 शानदार! Excellent!';
-    else if (stars === 2) titleEl.textContent = '👏 बहुत अच्छा! Very Good!';
-    else titleEl.textContent = '💪 अच्छा प्रयास! Good Try!';
+    if (stars === 3) {
+      titleEl.textContent = '🎊 शानदार! Excellent!';
+      speakHindi('बहुत अच्छा! तुमने तीन सितारे कमाए!');
+    } else if (stars === 2) {
+      titleEl.textContent = '👏 बहुत अच्छा! Very Good!';
+      speakHindi('बहुत अच्छा! तुमने दो सितारे कमाए!');
+    } else {
+      titleEl.textContent = '💪 अच्छा प्रयास! Good Try!';
+      speakHindi('अच्छा प्रयास! एक सितारा!');
+    }
   }
   if (scoreEl) scoreEl.textContent = `Score: ${total - mistakes} / ${total}`;
   if (bestEl)  bestEl.textContent  = `Best: ${starsHTML(best)}`;

@@ -78,6 +78,9 @@
 <div id="game-area">
   <p class="instruction">पहले एक आकार चुनो, फिर उसकी परछाई से मिलाओ!<br/>
     Tap a shape, then tap its matching outline!</p>
+  <div style="text-align:center">
+    <button class="hear-btn" onclick="hearAgain()" aria-label="आवाज़ सुनो">🔊</button>
+  </div>
 
   <div id="feedback-banner" class="feedback-banner"></div>
 
@@ -148,6 +151,9 @@ let shapes = [];
 let selectedShape = null;
 let matchedCount = 0;
 let mistakes = 0;
+const currentPrompt = 'आकार मिलाओ!';
+
+function hearAgain() { speakHindi(currentPrompt); }
 
 function initGame() {
   mistakes = 0; matchedCount = 0; selectedShape = null;
@@ -155,6 +161,7 @@ function initGame() {
   document.getElementById('game-area').classList.remove('hidden');
   hideFeedback();
   updateProgress(0, TOTAL_PAIRS);
+  speakHindi(currentPrompt);
 
   shapes = shuffle(SHAPES).slice(0, TOTAL_PAIRS);
   const outlines = shuffle([...shapes]);
