@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>मज़ेदार सीखना – Fun Learning</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .hero { padding-bottom: 60px; }
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 800;
+      padding: 0 4px 4px;
+      border-left: 5px solid var(--primary);
+      padding-left: 12px;
+      margin-bottom: 4px;
+    }
+    .reset-btn {
+      background: none;
+      border: 2px solid #ddd;
+      border-radius: 100px;
+      padding: 8px 18px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-light);
+      font-family: var(--font);
+    }
+    .footer {
+      text-align: center;
+      padding: 32px 16px;
+      color: var(--text-light);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-emoji">🌈</div>
+  <h1>मज़ेदार सीखना</h1>
+  <p>Fun Learning for Kids · Ages 4–6</p>
+</div>
+
+<div class="container">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:20px;margin-bottom:4px;">
+    <div class="section-title">Activities / गतिविधियाँ</div>
+    <button class="reset-btn" id="reset-btn">Reset Progress</button>
+  </div>
+
+  <div class="activities-grid" id="activities-grid">
+    <!-- filled by JS -->
+  </div>
+
+  <div class="footer">
+    Made with ❤️ for little learners &nbsp;•&nbsp; भारतीय बच्चों के लिए
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script>
+  const ACTIVITIES = [
+    { id:'counting',         icon:'🔢', name:'Counting',          nameHi:'गिनती',        age:'Ages 4–6', file:'counting.html' },
+    { id:'color-by-number',  icon:'🎨', name:'Color by Number',   nameHi:'रंग भरो',      age:'Ages 4–6', file:'color-by-number.html' },
+    { id:'identify-fruits',  icon:'🥕', name:'Fruits & Veggies',  nameHi:'फल और सब्ज़ी', age:'Ages 4–5', file:'identify-fruits.html' },
+    { id:'identify-animals', icon:'🐄', name:'Animals',           nameHi:'जानवर',        age:'Ages 4–5', file:'identify-animals.html' },
+    { id:'shape-matching',   icon:'🧩', name:'Shape Matching',    nameHi:'आकार मिलाओ',   age:'Ages 4–5', file:'shape-matching.html' },
+    { id:'odd-one-out',      icon:'🔀', name:'Odd One Out',       nameHi:'अलग कौन?',     age:'Ages 5–6', file:'odd-one-out.html' },
+    { id:'pattern',          icon:'📐', name:'Pattern',           nameHi:'पैटर्न',       age:'Ages 5–6', file:'pattern.html' },
+    { id:'math',             icon:'➕', name:'Simple Math',       nameHi:'गणित',         age:'Ages 5–6', file:'math.html' },
+  ];
+
+  const grid = document.getElementById('activities-grid');
+
+  function render() {
+    grid.innerHTML = '';
+    ACTIVITIES.forEach(a => {
+      const stars = Progress.getStars(a.id);
+      const card = document.createElement('a');
+      card.href = a.file;
+      card.className = 'activity-card';
+      card.innerHTML = `
+        <div class="icon">${a.icon}</div>
+        <div class="name">${a.name}</div>
+        <div class="name-hindi">${a.nameHi}</div>
+        <div class="age-badge">${a.age}</div>
+        <div class="card-stars">${stars > 0 ? starsHTML(stars) : '○○○'}</div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  render();
+
+  document.getElementById('reset-btn').addEventListener('click', () => {
+    if (confirm('Reset all progress?')) {
+      localStorage.removeItem('kfl_progress');
+      render();
+    }
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Odd One Out – अलग कौन?</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="page-header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1>🔀 Odd One Out</h1>
+  <div class="subtitle">अलग कौन? · Which one doesn't belong?</div>
+</div>
+
+<div class="container">
+  <div style="padding:20px 0 4px">
+    <div class="score-display">
+      Round <strong id="round-num">1</strong> / <span id="total-rounds">8</span>
+      &nbsp;&nbsp; Score: <strong id="score">0</strong>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="card" id="game-card">
+    <div class="question-area">
+      <div class="question-text">Which one is different?</div>
+      <div class="question-hint">कौन सा अलग है?</div>
+    </div>
+    <div class="items-grid" id="items-grid" style="grid-template-columns:repeat(2,1fr)"></div>
+    <div id="category-hint" style="text-align:center;margin-top:12px;font-size:0.85rem;color:var(--text-light)"></div>
+  </div>
+
+  <div class="card round-complete hidden" id="complete-screen">
+    <div class="big-emoji">🎯</div>
+    <h2>You're Smart! / बहुत होशियार!</h2>
+    <div class="stars mt-16" id="final-stars"></div>
+    <div style="margin-top:8px;color:var(--text-light)" id="final-score-text"></div>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" id="replay-btn">🔄 Play Again</button>
+      <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/odd-one-out.js"></script>
+</body>
+</html>

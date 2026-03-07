@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Counting Game – गिनती</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="page-header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1>🔢 Counting</h1>
+  <div class="subtitle">गिनती · Count the objects!</div>
+</div>
+
+<div class="container">
+  <div style="padding:20px 0">
+    <div class="score-display">
+      Round <strong id="round-num">1</strong> / <span id="total-rounds">8</span>
+      &nbsp;&nbsp; Score: <strong id="score">0</strong>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+    <div class="round-indicator" id="round-dots"></div>
+  </div>
+
+  <div class="card" id="game-card">
+    <div class="question-area">
+      <div class="question-text" id="question-text">How many do you see?</div>
+      <div class="question-hint" id="question-hint"></div>
+    </div>
+    <div class="emoji-display" id="emoji-display"></div>
+    <div class="options-grid" id="options"></div>
+  </div>
+
+  <div class="card round-complete hidden" id="complete-screen">
+    <div class="big-emoji">🎊</div>
+    <h2>Activity Complete!</h2>
+    <p>गतिविधि पूरी!</p>
+    <div class="stars mt-16" id="final-stars"></div>
+    <div style="margin-top:8px;color:var(--text-light)" id="final-score-text"></div>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" id="replay-btn">🔄 Play Again</button>
+      <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/counting.js"></script>
+</body>
+</html>

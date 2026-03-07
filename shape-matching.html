@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Shape Matching – आकार मिलाओ</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    .shapes-label {
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-light);
+      margin-bottom: 8px;
+    }
+    .outline-shape svg polygon,
+    .outline-shape svg rect,
+    .outline-shape svg circle,
+    .outline-shape svg path {
+      fill: none;
+      stroke: #999;
+      stroke-width: 3;
+      stroke-dasharray: 6 4;
+    }
+    .shape-card.matched .outline-shape svg polygon,
+    .shape-card.matched .outline-shape svg rect,
+    .shape-card.matched .outline-shape svg circle,
+    .shape-card.matched .outline-shape svg path {
+      fill: rgba(0,184,148,0.15);
+      stroke: var(--success);
+    }
+  </style>
+</head>
+<body>
+
+<div class="page-header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1>🧩 Shape Matching</h1>
+  <div class="subtitle">आकार मिलाओ · Match the shapes!</div>
+</div>
+
+<div class="container">
+  <div style="padding:20px 0 4px">
+    <div class="score-display">
+      Matched: <strong id="matched-count">0</strong> / <span id="total-shapes">6</span>
+    </div>
+    <div class="progress-bar-wrap">
+      <div class="progress-bar-fill" id="progress-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="card" id="game-card">
+    <p style="text-align:center;color:var(--text-light);font-size:0.95rem;margin-bottom:16px">
+      Tap a colored shape, then tap its matching outline!<br/>
+      <span style="font-size:0.85rem">रंगीन आकार छुओ, फिर उसका आकार ढूँढो!</span>
+    </p>
+    <div class="shapes-area">
+      <div>
+        <div class="shapes-label">Shapes / आकार</div>
+        <div class="shapes-row" id="colored-shapes"></div>
+      </div>
+      <div class="shapes-divider"></div>
+      <div>
+        <div class="shapes-label">Outlines / रूपरेखा</div>
+        <div class="shapes-row" id="outline-shapes"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card round-complete hidden" id="complete-screen">
+    <div class="big-emoji">🌈</div>
+    <h2>All Matched! / सब मिला दिए!</h2>
+    <div class="stars mt-16" id="final-stars"></div>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" id="replay-btn">🔄 Play Again</button>
+      <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/shape-matching.js"></script>
+</body>
+</html>

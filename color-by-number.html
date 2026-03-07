@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Color by Number – रंग भरो</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="page-header">
+  <a href="index.html" class="back-btn">←</a>
+  <h1>🎨 Color by Number</h1>
+  <div class="subtitle">रंग भरो · Tap a color, then tap a region!</div>
+</div>
+
+<div class="container">
+  <div style="padding:12px 0 4px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div style="font-size:1rem;font-weight:700;color:var(--text-light)">
+      Pattern <span id="pattern-num">1</span> / <span id="pattern-total">3</span>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" id="prev-pattern" style="min-height:44px;padding:8px 16px;font-size:0.9rem">◀ Prev</button>
+      <button class="btn btn-outline" id="next-pattern" style="min-height:44px;padding:8px 16px;font-size:0.9rem">Next ▶</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:8px">
+    <h3 id="pattern-title" style="text-align:center;margin-bottom:4px"></h3>
+    <p id="pattern-title-hi" style="text-align:center;font-size:0.9rem;color:var(--text-light);margin-bottom:12px"></p>
+
+    <!-- Color legend -->
+    <div class="color-legend" id="color-legend"></div>
+
+    <!-- SVG coloring area -->
+    <div id="svg-container" style="margin:16px 0"></div>
+
+    <div style="text-align:center;margin-top:8px">
+      <button class="btn btn-secondary" id="reset-btn" style="font-size:0.9rem;min-height:44px;padding:8px 20px">🔄 Reset</button>
+    </div>
+  </div>
+
+  <div class="card round-complete hidden" id="complete-screen" style="margin-top:16px">
+    <div class="big-emoji">🖼️</div>
+    <h2>Beautiful! / सुंदर!</h2>
+    <div class="stars mt-16" id="final-stars"></div>
+    <div style="margin-top:20px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" id="next-btn">Next Pattern ▶</button>
+      <a href="index.html" class="btn btn-secondary">🏠 Home</a>
+    </div>
+  </div>
+</div>
+
+<script src="js/common.js"></script>
+<script src="js/color-by-number.js"></script>
+</body>
+</html>
