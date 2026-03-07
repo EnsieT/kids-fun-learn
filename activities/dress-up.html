@@ -447,11 +447,11 @@ function toggleItem(el, idx, item) {
   if (selected.has(idx)) {
     selected.delete(idx);
     el.classList.remove('selected');
-    speak(item.hi, 'hi-IN');
+    speakHindi(item.hi);
   } else {
     selected.add(idx);
     el.classList.add('selected');
-    speak(item.hi + '। ' + item.en, 'hi-IN');
+    speakHindi(item.hi);
   }
 
   updateWornItems();
@@ -482,7 +482,7 @@ function checkCelebration() {
     celebrationShown = true;
     banner.classList.add('show');
     launchConfetti();
-    speak('बहुत सुंदर! Very Beautiful!', 'hi-IN');
+    speakHindi('बहुत सुंदर! Very Beautiful!');
   } else if (selected.size < 3) {
     celebrationShown = false;
     banner.classList.remove('show');
@@ -501,7 +501,7 @@ function switchFestival(idx) {
   document.getElementById('festival-label').textContent = `${f.emoji} ${f.hi} · ${f.en}`;
   buildTabs();
   renderItems();
-  speak(f.speak, 'hi-IN');
+  speakHindi(f.speak);
 }
 
 function prevFestival() {
@@ -528,7 +528,7 @@ function resetDressup() {
   document.getElementById('celebration-banner').classList.remove('show');
   clearWornSlots();
   renderItems();
-  speak('फिर से शुरू करो!', 'hi-IN');
+  speakHindi('फिर से शुरू करो!');
 }
 
 // ===== Init =====
@@ -537,7 +537,7 @@ function init() {
   const f = FESTIVALS[currentFestivalIdx];
   document.getElementById('festival-label').textContent = `${f.emoji} ${f.hi} · ${f.en}`;
   renderItems();
-  setTimeout(() => speak('कपड़े पहनाओ!', 'hi-IN'), 600);
+  setTimeout(() => speakHindi('कपड़े पहनाओ!'), 600);
 }
 
 document.addEventListener('DOMContentLoaded', init);
