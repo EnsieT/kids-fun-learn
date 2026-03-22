@@ -13,7 +13,7 @@
   <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
   <h1>➕ Simple Math</h1>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
-  <span class="score-display" id="score-display">0/10</span>
+  <span class="score-display" id="score-display">0/12</span>
 </header>
 
 <div id="langSelector" class="language-selector">
@@ -45,13 +45,15 @@
 
 <script src="../js/common.js"></script>
 <script>
-const MATH_OBJECTS = ['🥭','🍌','🥥','🍐','🍎','🐘','🦚','🌸','⭐','🪔'];
+const MATH_OBJECTS = ['🥭','🍌','🥥','🍐','🍎','🐘','🦚','🌸','⭐','🪔','🦋','🐸','🎈','🍪','🚗','🎠','🐧','🌙'];
 const HINDI_NUMS = ['शून्य','एक','दो','तीन','चार','पाँच','छः','सात','आठ','नौ','दस'];
 const GUJARATI_NUMS = ['શૂન્ય','એક','બે','ત્રણ','ચાર','પાંચ','છ','સાત','આઠ','નવ','દસ'];
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 12;
 let round = 0, mistakes = 0, answered = false, correctAnswer = 0;
 let currentPrompt = {};
+let wrongStreak = 0;
+let currentHintPrompt = {};
 
 function hearAgain() { speak(currentPrompt); }
 
@@ -68,31 +70,49 @@ function initGame() {
 function nextRound() {
   if (round >= TOTAL_ROUNDS) { showCompletion('math', mistakes, TOTAL_ROUNDS); return; }
   answered = false;
+  wrongStreak = 0;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
 
   const emoji = MATH_OBJECTS[Math.floor(Math.random() * MATH_OBJECTS.length)];
-  const isAdd = Math.random() > 0.4; // 60% addition, 40% subtraction
+  const modeRoll = Math.random();
+  const mode = round < 4
+    ? 'add'
+    : (round < 8 ? (modeRoll < 0.65 ? 'add' : 'sub') : (modeRoll < 0.5 ? 'add' : (modeRoll < 0.85 ? 'sub' : 'double')));
 
-  let a, b;
-  if (isAdd) {
-    a = 1 + Math.floor(Math.random() * 5);
-    b = 1 + Math.floor(Math.random() * 5);
+  let a, b, op;
+  if (mode === 'add') {
+    const maxAdd = round < 4 ? 4 : 5;
+    a = 1 + Math.floor(Math.random() * maxAdd);
+    b = 1 + Math.floor(Math.random() * maxAdd);
     // Keep total ≤ 10
     if (a + b > 10) b = 10 - a;
     correctAnswer = a + b;
-  } else {
-    a = 2 + Math.floor(Math.random() * 8);
+    op = '+';
+  } else if (mode === 'sub') {
+    const maxTop = round < 8 ? 7 : 9;
+    a = 2 + Math.floor(Math.random() * maxTop);
     b = 1 + Math.floor(Math.random() * (a - 1));
     correctAnswer = a - b;
+    op = '−';
+  } else {
+    a = 2 + Math.floor(Math.random() * 4); // 2-5
+    b = 2;
+    correctAnswer = a * b;
+    op = '×';
   }
 
-  const op = isAdd ? '+' : '−';
   const eq = document.getElementById('math-equation');
+  const thirdGroup = mode === 'add'
+    ? emoji.repeat(b)
+    : (mode === 'sub'
+        ? '<s style="opacity:.45">' + emoji.repeat(b) + '</s>'
+        : emoji.repeat(a));
+
   eq.innerHTML = `
     <div class="math-group">${emoji.repeat(a)}</div>
     <div class="math-op">${op}</div>
-    <div class="math-group">${isAdd ? emoji.repeat(b) : '<s style="opacity:.45">' + emoji.repeat(b) + '</s>'}</div>
+    <div class="math-group">${thirdGroup}</div>
     <div class="math-eq">=</div>
     <div class="math-q">❓</div>
   `;
@@ -100,17 +120,38 @@ function nextRound() {
   document.getElementById('question-text').textContent =
     t({en: `Solve it! ${a} ${op} ${b} = ?`, hi: `${a} ${op} ${b} = ?`, gu: `${a} ${op} ${b} = ?`});
 
-  if (isAdd) {
+  if (mode === 'add') {
     currentPrompt = {
       en:  a + ' plus ' + b + ', how many?',
       hi: HINDI_NUMS[a] + ' और ' + HINDI_NUMS[b] + ', कितने हुए?',
       gu: GUJARATI_NUMS[a] + ' અને ' + GUJARATI_NUMS[b] + ', કેટલા થયા?'
     };
-  } else {
+    currentHintPrompt = {
+      en: 'Hint: count all objects together.',
+      hi: 'संकेत: सब चीजें मिलाकर गिनो।',
+      gu: 'ઈશારો: બધી વસ્તુઓ સાથે ગણી લો.'
+    };
+  } else if (mode === 'sub') {
     currentPrompt = {
       en:  a + ' minus ' + b + ', how many remain?',
       hi: HINDI_NUMS[a] + ' में से ' + HINDI_NUMS[b] + ' घटाओ, कितने बचे?',
       gu: GUJARATI_NUMS[a] + ' માંથી ' + GUJARATI_NUMS[b] + ' બાદ કરો, કેટલા બચ્યા?'
+    };
+    currentHintPrompt = {
+      en: 'Hint: first count all, then remove the crossed ones.',
+      hi: 'संकेत: पहले सब गिनो, फिर काटी हुई चीजें हटाओ।',
+      gu: 'ઈશારો: પહેલા બધું ગણો, પછી કાપેલી વસ્તુઓ ઘટાડો.'
+    };
+  } else {
+    currentPrompt = {
+      en: `${a} times 2, how many total?`,
+      hi: HINDI_NUMS[a] + ' का दो गुना, कितने हुए?',
+      gu: GUJARATI_NUMS[a] + ' નો બે ગણો, કેટલા થયા?'
+    };
+    currentHintPrompt = {
+      en: 'Hint: double means same group two times.',
+      hi: 'संकेत: दो गुना मतलब वही समूह दो बार।',
+      gu: 'ઈશારો: બે ગણો એટલે એજ સમૂહ બે વાર.'
     };
   }
   speak(currentPrompt);
@@ -139,14 +180,17 @@ function handleChoice(btn, value) {
   if (answered) return;
   if (value === correctAnswer) {
     answered = true;
+    wrongStreak = 0;
     btn.classList.add('correct');
     showFeedback(true);
     round++;
     setTimeout(() => { btn.classList.remove('correct'); nextRound(); }, 1500);
   } else {
     mistakes++;
+    wrongStreak++;
     btn.classList.add('wrong');
     showFeedback(false);
+    if (wrongStreak >= 2) speak(currentHintPrompt);
     setTimeout(() => btn.classList.remove('wrong'), 600);
   }
 }

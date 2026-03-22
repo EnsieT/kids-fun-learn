@@ -156,6 +156,14 @@
         sound:{ en:'Ding Ding',        hi:'टिंग टिंग',       gu:'ટિંગ ટિંગ' } },
       { key:'horn',     emoji:'🎺', en:'Horn',     hi:'बिगुल',    gu:'બ્યૂગલ',
         sound:{ en:'Pom Pom',          hi:'पों पों',         gu:'પૉં પૉં' } },
+      { key:'duck',     emoji:'🦆', en:'Duck',     hi:'बतख',      gu:'બતક',
+        sound:{ en:'Quack Quack',      hi:'काँ काँ',          gu:'કાં કાં' } },
+      { key:'sheep',    emoji:'🐑', en:'Sheep',    hi:'भेड़',      gu:'ઘેટ',
+        sound:{ en:'Baa Baa',          hi:'में में',          gu:'મે મે' } },
+      { key:'baby',     emoji:'👶', en:'Baby',     hi:'बच्चा',    gu:'બાળક',
+        sound:{ en:'Goo Goo',          hi:'गू गू',           gu:'ગૂ ગૂ' } },
+      { key:'drum',     emoji:'🥁', en:'Drum',     hi:'ढोल',      gu:'ઢોલ',
+        sound:{ en:'Boom Boom',        hi:'धम धम',           gu:'ધમ ધમ' } },
     ];
 
     const TOTAL_ROUNDS = 10;
@@ -277,7 +285,6 @@
     }
 
     function endGame() {
-      saveBestScore('sound-bingo', mistakes, TOTAL_ROUNDS);
       showCompletion('sound-bingo', mistakes, TOTAL_ROUNDS);
     }
 

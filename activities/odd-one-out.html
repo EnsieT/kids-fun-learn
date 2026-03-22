@@ -13,7 +13,7 @@
   <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
   <h1>🔀 Odd One Out</h1>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
-  <span class="score-display" id="score-display">0/10</span>
+  <span class="score-display" id="score-display">0/12</span>
 </header>
 
 <div id="langSelector" class="language-selector">
@@ -60,12 +60,29 @@ const PUZZLES = [
   { items:['🐒','🦁','🐯','🚗'], odd:'🚗',  hint:'Animals vs Vehicle' },
   { items:['📱','💻','📺','🥦'], odd:'🥦',  hint:'Electronics vs Veggie' },
   { items:['🌸','🌺','🌻','🐘'], odd:'🐘',  hint:'Flowers vs Animal' },
+  { items:['🥕','🥔','🧅','🐟'], odd:'🐟',  hint:'Vegetables vs Fish' },
+  { items:['🎈','🧸','🧩','🚜'], odd:'🚜',  hint:'Toys vs Vehicle' },
+  { items:['🍇','🍊','🍎','🚌'], odd:'🚌',  hint:'Fruits vs Transport' },
+  { items:['🐬','🐳','🐟','🌻'], odd:'🌻',  hint:'Sea animals vs Flower' },
+  { items:['☂️','🧥','🧤','🍌'], odd:'🍌',  hint:'Rainwear vs Fruit' },
+  { items:['🎸','🎹','🎻','🍉'], odd:'🍉',  hint:'Music vs Fruit' },
+  { items:['🐢','🐍','🦎','🍓'], odd:'🍓',  hint:'Reptiles vs Fruit' },
+  { items:['🍯','🍪','🧁','🦁'], odd:'🦁',  hint:'Snacks vs Animal' },
+  { items:['⚽','🏀','🏈','🐸'], odd:'🐸',  hint:'Sports vs Animal' },
+  { items:['🐝','🦋','🐞','🍦'], odd:'🍦',  hint:'Bugs vs Treat' },
+  { items:['🧊','🥤','🧃','🦒'], odd:'🦒',  hint:'Drinks vs Animal' },
+  { items:['🐙','🦀','🦞','🌳'], odd:'🌳',  hint:'Sea vs Tree' },
+  { items:['🎃','👻','🎭','🥒'], odd:'🥒',  hint:'Halloween vs Veggie' },
+  { items:['🚁','✈️','🛸','🐿️'], odd:'🐿️',  hint:'Flying vs Animal' },
+  { items:['🐑','🐐','🐖','🍭'], odd:'🍭',  hint:'Farm vs Candy' },
+  { items:['🧊','❄️','⛄','🍉'], odd:'🍉',  hint:'Winter vs Fruit' },
 ];
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 12;
 let round = 0, mistakes = 0, answered = false;
 let usedPuzzles = [];
 const currentPrompt = {en: "Which one doesn't belong?", hi: 'कौन सा अलग है?', gu: 'કયું અલગ છે?'};
+let wrongStreak = 0;
 
 function hearAgain() { speak(currentPrompt); }
 
@@ -73,7 +90,9 @@ function onLanguageChange() { initGame(); }
 
 function initGame() {
   round = 0; mistakes = 0; answered = false;
-  usedPuzzles = shuffle(PUZZLES).slice(0, TOTAL_ROUNDS);
+  const easyPool = PUZZLES.slice(0, 8);
+  const mediumPool = PUZZLES.slice(8);
+  usedPuzzles = [...shuffle(easyPool).slice(0, 6), ...shuffle(mediumPool).slice(0, TOTAL_ROUNDS - 6)];
   document.getElementById('completion-screen').classList.remove('show');
   document.getElementById('game-area').classList.remove('hidden');
   hideFeedback();
@@ -83,6 +102,7 @@ function initGame() {
 function nextRound() {
   if (round >= TOTAL_ROUNDS) { showCompletion('odd-one-out', mistakes, TOTAL_ROUNDS); return; }
   answered = false;
+  wrongStreak = 0;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
   document.getElementById('question-text').textContent = t(currentPrompt);
@@ -109,14 +129,23 @@ function handleChoice(btn, emoji, odd) {
   if (answered) return;
   if (emoji === odd) {
     answered = true;
+    wrongStreak = 0;
     btn.classList.add('correct');
     showFeedback(true);
     round++;
     setTimeout(() => { btn.classList.remove('correct'); nextRound(); }, 1500);
   } else {
     mistakes++;
+    wrongStreak++;
     btn.classList.add('wrong');
     showFeedback(false);
+    if (wrongStreak >= 2) {
+      speak({
+        en: 'Hint: find the one from a different group.',
+        hi: 'संकेत: अलग समूह वाली चीज़ चुनो।',
+        gu: 'ઈશારો: અલગ જૂથની વસ્તુ શોધો.'
+      });
+    }
     setTimeout(() => btn.classList.remove('wrong'), 600);
   }
 }

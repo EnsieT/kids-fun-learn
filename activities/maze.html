@@ -14,9 +14,10 @@
   min-height:44px; touch-action:manipulation;
 }
 .diff-btn.active { background:#e0a030; color:#fff; }
+.diff-btn-alt { border-style:dashed; background:#fff; }
 #stats-bar { display:flex; gap:1.2rem; font-size:1rem; font-weight:bold; color:#5C4A1E; }
 #maze-scroll { overflow:auto; max-width:100vw; padding:4px; }
-#maze-grid { display:grid; gap:0; touch-action:none; user-select:none; }
+#maze-grid { display:grid; gap:0; touch-action:manipulation; user-select:none; }
 .maze-cell {
   display:flex; align-items:center; justify-content:center;
   cursor:pointer; box-sizing:border-box; transition:background-color .15s;
@@ -30,6 +31,7 @@
   0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
 }
 .maze-cell span { pointer-events:none; line-height:1; }
+.maze-hint { font-size:.95rem; color:#6d5c3a; text-align:center; margin:0; max-width:28rem; }
 </style>
 </head>
 <body>
@@ -52,10 +54,12 @@
   <div id="maze-container">
     <p class="question-text" id="prompt-text"></p>
     <div id="difficulty-btns">
-      <button class="diff-btn active" onclick="setDifficulty('easy')">🐣 Easy 5×5</button>
-      <button class="diff-btn"        onclick="setDifficulty('medium')">🐥 Medium 7×7</button>
-      <button class="diff-btn"        onclick="setDifficulty('hard')">🐓 Hard 9×9</button>
+      <button type="button" class="diff-btn active" data-diff="easy" onclick="setDifficulty('easy')">🐣 Easy 5×5</button>
+      <button type="button" class="diff-btn"        data-diff="medium" onclick="setDifficulty('medium')">🐥 Medium 7×7</button>
+      <button type="button" class="diff-btn"        data-diff="hard" onclick="setDifficulty('hard')">🐓 Hard 9×9</button>
+      <button type="button" class="diff-btn diff-btn-alt" onclick="nextMazeVariant()">🧩 Next Maze</button>
     </div>
+    <p class="maze-hint" id="maze-hint"></p>
     <div id="stats-bar">
       <span id="wrong-count">❌ 0</span>
       <span id="steps-count">👣 0</span>
@@ -114,9 +118,36 @@ function generateMaze(size, seed) {
 
 /* ── Config ── */
 const DIFFS = {
-  easy:   {size:5, cs:64, seed:42},
-  medium: {size:7, cs:46, seed:137},
-  hard:   {size:9, cs:36, seed:999},
+  easy:   {size:5, cs:64},
+  medium: {size:7, cs:46},
+  hard:   {size:9, cs:36},
+};
+
+const MAZE_VARIANTS = [
+  {
+    name: { en: 'Farm Path', hi: 'खेत वाला रास्ता', gu: 'ખેતરનો રસ્તો' },
+    seeds: { easy: 42, medium: 137, hard: 999 },
+    player: '🐄',
+    goal: '🌾'
+  },
+  {
+    name: { en: 'Jungle Path', hi: 'जंगल वाला रास्ता', gu: 'જંગલનો રસ્તો' },
+    seeds: { easy: 77, medium: 241, hard: 1401 },
+    player: '🐒',
+    goal: '🍌'
+  },
+  {
+    name: { en: 'Ocean Path', hi: 'समुद्र वाला रास्ता', gu: 'સમુદ્રનો રસ્તો' },
+    seeds: { easy: 88, medium: 503, hard: 1627 },
+    player: '🐠',
+    goal: '🐚'
+  },
+  {
+    name: { en: 'Space Path', hi: 'अंतरिक्ष वाला रास्ता', gu: 'અવકાશનો રસ્તો' },
+    seeds: { easy: 123, medium: 701, hard: 1907 },
+    player: '🚀',
+    goal: '⭐'
+  }
 };
 const WALL_CLR  = '#5C3D11';
 const WALL_W    = '4px';
@@ -124,37 +155,66 @@ const OPEN_CLR  = 'rgba(180,150,100,0.15)';
 const OPEN_W    = '1px';
 
 let difficulty = 'easy';
+let variantIndex = 0;
 let mazeWalls = null, currentPos = {r:0,c:0};
 let visitedSet = new Set(), wrongMoves = 0, stepCount = 0, gameWon = false;
+let wallHitStreak = 0;
 
 function setDifficulty(d) {
   difficulty = d;
-  document.querySelectorAll('.diff-btn').forEach((btn,i) => {
-    btn.classList.toggle('active', ['easy','medium','hard'][i]===d);
+  document.querySelectorAll('.diff-btn[data-diff]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.diff === d);
   });
+  initGame();
+}
+
+function nextMazeVariant() {
+  variantIndex = (variantIndex + 1) % MAZE_VARIANTS.length;
   initGame();
 }
 
 function onLanguageChange() {
   updatePromptText();
+  updateMazeHint();
   document.getElementById('play-again-btn').textContent =
     t({en:'🔄 Play Again', hi:'🔄 फिर से खेलो', gu:'🔄 ફરી રમો'});
 }
 
+function updateMazeHint() {
+  const el = document.getElementById('maze-hint');
+  if (!el) return;
+  el.textContent = t({
+    en: 'Tap a next-door square or use arrow keys ↑ ↓ ← →',
+    hi: 'पास वाला खाना छुएँ या तीर कीज़ (↑ ↓ ← →)',
+    gu: 'બાજુનો ખાનો દબાવો અથવા એરો કીઝ (↑ ↓ ← →)'
+  });
+}
+
 function updatePromptText() {
-  const p = {en:'Help the cow reach the grass!',hi:'गाय को घास तक पहुंचाओ!',gu:'ગાયને ઘાસ સુધી પહોંચાડો!'};
+  const v = MAZE_VARIANTS[variantIndex];
+  const p = {
+    en: `${v.name.en}: help ${v.player} reach ${v.goal}!`,
+    hi: `${v.name.hi}: ${v.player} को ${v.goal} तक पहुंचाओ!`,
+    gu: `${v.name.gu}: ${v.player} ને ${v.goal} સુધી પહોંચાડો!`
+  };
   document.getElementById('prompt-text').textContent = t(p);
 }
 
 function initGame() {
   gameWon=false; wrongMoves=0; stepCount=0;
+  wallHitStreak = 0;
   currentPos={r:0,c:0}; visitedSet=new Set(['0,0']);
   const conf = DIFFS[difficulty];
-  mazeWalls = generateMaze(conf.size, conf.seed);
+  const activeVariant = MAZE_VARIANTS[variantIndex];
+  mazeWalls = generateMaze(conf.size, activeVariant.seeds[difficulty]);
   document.getElementById('completion-screen').classList.remove('show');
   document.getElementById('game-area').classList.remove('hidden');
-  hideFeedback(); updateStats(); renderMaze(); updatePromptText();
-  const p={en:'Help the cow reach the grass!',hi:'गाय को घास तक पहुंचाओ!',gu:'ગાયને ઘાસ સુધી પહોંચાડો!'};
+  hideFeedback(); updateStats(); renderMaze(); updatePromptText(); updateMazeHint();
+  const p = {
+    en: `${activeVariant.name.en}. Move to the goal!`,
+    hi: `${activeVariant.name.hi}. मंज़िल तक जाओ!`,
+    gu: `${activeVariant.name.gu}. લક્ષ્ય સુધી જાઓ!`
+  };
   setTimeout(()=>speak(p),300);
 }
 
@@ -194,10 +254,10 @@ function renderMaze() {
       if (isCurrent)  cell.classList.add('current');
       if (isEnd)      cell.classList.add('end-cell');
 
-      if (isCurrent) { const sp=document.createElement('span'); sp.textContent='🐄'; cell.appendChild(sp); }
-      else if (isEnd) { const sp=document.createElement('span'); sp.textContent='🌾'; cell.appendChild(sp); }
+      if (isCurrent) { const sp=document.createElement('span'); sp.textContent=MAZE_VARIANTS[variantIndex].player; cell.appendChild(sp); }
+      else if (isEnd) { const sp=document.createElement('span'); sp.textContent=MAZE_VARIANTS[variantIndex].goal; cell.appendChild(sp); }
 
-      cell.addEventListener('pointerdown', onCellPointer);
+      cell.addEventListener('click', onCellClick);
       grid.appendChild(cell);
     }
   }
@@ -217,8 +277,16 @@ function handleMove(r, c) {
   const dir = dr===-1?'N': dr===1?'S': dc===-1?'W':'E';
 
   if (mazeWalls[cr][cc][dir]) {
+    wallHitStreak++;
     wrongMoves++; updateStats();
     speak({en:"That's a wall!",hi:'यह दीवार है!',gu:'આ દીવાલ છે!'});
+    if (wallHitStreak >= 2) {
+      speak({
+        en: 'Try another side: up, down, left, or right.',
+        hi: 'दूसरी दिशा आज़माओ: ऊपर, नीचे, बाएं या दाएं।',
+        gu: 'બીજી દિશા અજમાવો: ઉપર, નીચે, ડાબે કે જમણે.'
+      });
+    }
     const {size} = DIFFS[difficulty];
     const idx = cr*size+cc;
     const cells = document.querySelectorAll('.maze-cell');
@@ -230,15 +298,28 @@ function handleMove(r, c) {
   }
 
   visitedSet.add(`${r},${c}`);
+  wallHitStreak = 0;
   currentPos={r,c}; stepCount++; updateStats(); renderMaze();
 
   if (r===DIFFS[difficulty].size-1 && c===DIFFS[difficulty].size-1) {
     gameWon=true;
-    const p={en:'You made it! The cow reached the grass!',hi:'वाह! गाय घास तक पहुंच गई!',gu:'વાહ! ગાય ઘાસ સુધી પહોંચી!'};
+    const v = MAZE_VARIANTS[variantIndex];
+    const p={
+      en:`You made it! ${v.player} reached ${v.goal}!`,
+      hi:`वाह! ${v.player} ${v.goal} तक पहुंच गया!`,
+      gu:`વાહ! ${v.player} ${v.goal} સુધી પહોંચી ગયું!`
+    };
     speak(p); launchConfetti();
     setTimeout(()=>showCompletion('maze', wrongMoves, stepCount+wrongMoves), 900);
   }
 }
+
+document.addEventListener('keydown', e => {
+  if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+    e.preventDefault();
+    tryArrowMove(e.key);
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => { initLanguageSelector(); initGame(); });
 </script>

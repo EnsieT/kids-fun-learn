@@ -183,6 +183,11 @@
       { key:'flower',    emoji:'🌺', en:'Flower',    hi:'फूल',        gu:'ફूल' },
       { key:'fireworks', emoji:'🎆', en:'Fireworks', hi:'आतिशबाजी',  gu:'ફटाकडा' },
       { key:'star',      emoji:'⭐', en:'Star',       hi:'तारा',       gu:'તारो' },
+      { key:'kite',      emoji:'🪁', en:'Kite',       hi:'पतंग',       gu:'પતંગ' },
+      { key:'book',      emoji:'📚', en:'Book',       hi:'किताब',      gu:'પુસ્તક' },
+      { key:'bus',       emoji:'🚌', en:'Bus',        hi:'बस',         gu:'બસ' },
+      { key:'balloon',   emoji:'🎈', en:'Balloon',    hi:'गुब्बारा',    gu:'ફુગ્ગો' },
+      { key:'teddy',     emoji:'🧸', en:'Teddy',      hi:'टेडी',       gu:'ટેડી' },
     ];
 
     let round = 0;
@@ -192,7 +197,8 @@
     let missingItems = [];
     let missingIndex = 0;
     let mistakeThisRound = false;
-    const TOTAL_ROUNDS = 10;
+    let wrongStreak = 0;
+    const TOTAL_ROUNDS = 12;
 
     function getDifficulty() {
       if (round < 3) return 'easy';
@@ -201,7 +207,7 @@
     }
     function getItemCount() { return {easy:4, medium:5, hard:6}[getDifficulty()]; }
     function getMissingCount() { return getDifficulty() === 'hard' ? 2 : 1; }
-    function getMemoryTime() { return {easy:3000, medium:4000, hard:5000}[getDifficulty()]; }
+    function getMemoryTime() { return {easy:4500, medium:5200, hard:5800}[getDifficulty()]; }
 
     function onLanguageChange() {
       renderPhaseLabel();
@@ -276,6 +282,7 @@
       const target = missingItems[missingIndex];
       if (item.key === target.key) {
         answerLocked = true;
+        wrongStreak = 0;
         btn.classList.add('correct-choice');
         showFeedback(true);
         speak({en:'Great memory! 🌟', hi:'शानदार याददाश्त! 🌟', gu:'અદ્ભુત યાદ! 🌟'});
@@ -314,12 +321,20 @@
           }
         }, 1200);
       } else {
+        wrongStreak++;
         if (!mistakeThisRound) {
           mistakeThisRound = true;
         }
         btn.classList.add('wrong-choice');
         showFeedback(false);
         speak({en:'Think again!', hi:'फिर सोचो!', gu:'ફરી વિચારો!'});
+        if (wrongStreak >= 2) {
+          speak({
+            en: `Hint: look for ${target.en}.`,
+            hi: `संकेत: ${target.hi} को ढूंढो।`,
+            gu: `ઈશારો: ${target.gu} શોધો.`
+          });
+        }
         const row = document.getElementById('choices-row');
         row.classList.add('shake');
         row.addEventListener('animationend', () => row.classList.remove('shake'), {once:true});
@@ -346,6 +361,7 @@
     function startRound() {
       phase = 1;
       mistakeThisRound = false;
+      wrongStreak = 0;
       missingIndex = 0;
       answerLocked = false;
 

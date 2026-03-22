@@ -13,7 +13,7 @@
   <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
   <h1>🥭 Fruits &amp; Veggies</h1>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
-  <span class="score-display" id="score-display">0/10</span>
+  <span class="score-display" id="score-display">0/12</span>
 </header>
 
 <div id="langSelector" class="language-selector">
@@ -56,11 +56,16 @@ const ITEMS = [
   {emoji:'🥒', en:'Cucumber',     hi:'खीरा',          gu:'કાકડી'},
   {emoji:'🧅', en:'Onion',        hi:'प्याज',         gu:'ડુંગળી'},
   {emoji:'🫑', en:'Bell Pepper',  hi:'शिमला मिर्च',   gu:'સિમ્લા મરચું'},
+  {emoji:'🍇', en:'Grapes',       hi:'अंगूर',         gu:'દ્રાક્ષ'},
+  {emoji:'🍊', en:'Orange',       hi:'संतरा',         gu:'સંતરો'},
+  {emoji:'🥕', en:'Carrot',       hi:'गाजर',          gu:'ગાજર'},
+  {emoji:'🥬', en:'Leafy Greens', hi:'हरी पत्तियां',  gu:'લીલા શાક'},
 ];
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 12;
 let round = 0, mistakes = 0, answered = false, correctItem = null;
 let currentPrompt = {};
+let wrongStreak = 0;
 
 function hearAgain() { speak(currentPrompt); }
 
@@ -77,10 +82,12 @@ function initGame() {
 function nextRound() {
   if (round >= TOTAL_ROUNDS) { showCompletion('identify-fruits', mistakes, TOTAL_ROUNDS); return; }
   answered = false;
+  wrongStreak = 0;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
 
-  const pool = shuffle(ITEMS).slice(0, 6);
+  const optionsCount = round < 4 ? 4 : (round < 8 ? 5 : 6);
+  const pool = shuffle(ITEMS).slice(0, optionsCount);
   correctItem = pool[Math.floor(Math.random() * pool.length)];
   document.getElementById('question-text').innerHTML =
     `${t({en:'Tap the', hi:'छुओ', gu:'ટચ કરો'})} <strong>${t(correctItem)}</strong>! 👆`;
@@ -104,14 +111,23 @@ function handleTap(el, item) {
   if (answered) return;
   if (item.emoji === correctItem.emoji) {
     answered = true;
+    wrongStreak = 0;
     el.classList.add('correct');
     showFeedback(true);
     round++;
     setTimeout(() => { el.classList.remove('correct'); nextRound(); }, 1500);
   } else {
     mistakes++;
+    wrongStreak++;
     el.classList.add('wrong');
     showFeedback(false);
+    if (wrongStreak >= 2) {
+      speak({
+        en: `Hint: tap ${correctItem.en}.`,
+        hi: `संकेत: ${correctItem.hi} को छुओ।`,
+        gu: `ઈશારો: ${correctItem.gu} ને ટચ કરો.`
+      });
+    }
     setTimeout(() => el.classList.remove('wrong'), 600);
   }
 }

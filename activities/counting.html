@@ -13,7 +13,7 @@
   <button class="back-btn" onclick="goHome()" aria-label="Go Home">🏠</button>
   <h1>🔢 Counting Game</h1>
   <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progress-fill"></div></div>
-  <span class="score-display" id="score-display">0/10</span>
+  <span class="score-display" id="score-display">0/12</span>
 </header>
 
 <div id="langSelector" class="language-selector">
@@ -56,14 +56,30 @@ const OBJECTS = [
   {emoji: '🍬', name: 'Candy',    hi: 'टॉफ़ी', gu: 'ટૉફી'},
   {emoji: '🐘', name: 'Elephant', hi: 'हाथी',  gu: 'હાથી'},
   {emoji: '🦚', name: 'Peacock',  hi: 'मोर',   gu: 'મોર'},
+  {emoji: '🧸', name: 'Teddy',    hi: 'टेडी',  gu: 'ટેડી'},
+  {emoji: '🧩', name: 'Puzzle',   hi: 'पज़ल',  gu: 'પઝલ'},
+  {emoji: '🎈', name: 'Balloon',  hi: 'गुब्बारा', gu: 'ફુગ્ગો'},
+  {emoji: '🚗', name: 'Car',      hi: 'गाड़ी', gu: 'ગાડી'},
+  {emoji: '🦋', name: 'Butterfly', hi: 'तितली', gu: 'ફરફરિયો'},
+  {emoji: '🐸', name: 'Frog',     hi: 'मेंढक', gu: 'દેડકો'},
+  {emoji: '🌈', name: 'Rainbow',  hi: 'इंद्रधनुष', gu: 'ઇન્દ્રધનુષ'},
+  {emoji: '🎠', name: 'Carousel', hi: 'झूला', gu: 'ઝૂલો'},
+  {emoji: '🍕', name: 'Pizza',    hi: 'पिज़्ज़ा', gu: 'પિઝા'},
+  {emoji: '🥁', name: 'Drum',     hi: 'ढोल', gu: 'ઢોલ'},
+  {emoji: '🎪', name: 'Circus',   hi: 'सर्कस', gu: 'સર્કસ'},
+  {emoji: '🐧', name: 'Penguin',  hi: 'पेंग्विन', gu: 'પેંગ્વિન'},
+  {emoji: '🌙', name: 'Moon',     hi: 'चाँद', gu: 'ચંદ્ર'},
 ];
 
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 12;
 let round = 0;
 let mistakes = 0;
 let answered = false;
 let correctAnswer = 0;
 let currentPrompt = {};
+let currentObject = null;
+const QUESTION_STYLES = ['how-many', 'show-number'];
+let wrongStreak = 0;
 
 function hearAgain() { speak(currentPrompt); }
 
@@ -82,24 +98,41 @@ function initGame() {
 function nextRound() {
   if (round >= TOTAL_ROUNDS) { showCompletion('counting', mistakes, TOTAL_ROUNDS); return; }
   answered = false;
+  wrongStreak = 0;
   hideFeedback();
   updateProgress(round, TOTAL_ROUNDS);
 
   const obj = OBJECTS[Math.floor(Math.random() * OBJECTS.length)];
-  const count = 1 + Math.floor(Math.random() * 9); // 1–9
+  currentObject = obj;
+  const maxCount = round < 4 ? 5 : (round < 8 ? 8 : 10);
+  const count = 1 + Math.floor(Math.random() * maxCount);
+  const style = QUESTION_STYLES[Math.floor(Math.random() * QUESTION_STYLES.length)];
   correctAnswer = count;
 
   document.getElementById('emoji-display').textContent = obj.emoji.repeat(count);
-  document.getElementById('question-text').textContent =
-    t({en: `How many ${obj.name}s?`, hi: `कितने ${obj.hi} हैं?`, gu: `કેટલા ${obj.gu} છે?`});
-
-  currentPrompt = {en: `How many ${obj.name}s? Count them!`, hi: 'कितने ' + obj.hi + ' हैं? गिनो!', gu: 'કેટલા ' + obj.gu + ' છે? ગણો!'};
+  if (style === 'show-number') {
+    document.getElementById('question-text').textContent =
+      t({en: `Show me number ${count}!`, hi: `मुझे नंबर ${count} दिखाओ!`, gu: `મને નંબર ${count} બતાવો!`});
+    currentPrompt = {
+      en: `Show me number ${count}. Count the ${obj.name}s!`,
+      hi: `नंबर ${count} दिखाओ। ${obj.hi} गिनो!`,
+      gu: `નંબર ${count} બતાવો. ${obj.gu} ગણો!`
+    };
+  } else {
+    document.getElementById('question-text').textContent =
+      t({en: `How many ${obj.name}s?`, hi: `कितने ${obj.hi} हैं?`, gu: `કેટલા ${obj.gu} છે?`});
+    currentPrompt = {
+      en: `How many ${obj.name}s? Count them!`,
+      hi: 'कितने ' + obj.hi + ' हैं? गिनो!',
+      gu: 'કેટલા ' + obj.gu + ' છે? ગણો!'
+    };
+  }
   speak(currentPrompt);
 
   // Generate choices: correct + 3 wrong
   const wrong = new Set();
   while (wrong.size < 3) {
-    const n = 1 + Math.floor(Math.random() * 9);
+    const n = 1 + Math.floor(Math.random() * maxCount);
     if (n !== count) wrong.add(n);
   }
   const choices = shuffle([count, ...wrong]);
@@ -119,14 +152,23 @@ function handleChoice(btn, value) {
   if (answered) return;
   if (value === correctAnswer) {
     answered = true;
+    wrongStreak = 0;
     btn.classList.add('correct');
     showFeedback(true);
     round++;
     setTimeout(() => { btn.classList.remove('correct'); nextRound(); }, 1500);
   } else {
     mistakes++;
+    wrongStreak++;
     btn.classList.add('wrong');
     showFeedback(false);
+    if (wrongStreak >= 2) {
+      speak({
+        en: `Count slowly. Point to each ${currentObject.name} one by one.`,
+        hi: 'धीरे गिनो। एक-एक करके उंगली से गिनो।',
+        gu: 'ધીમે ગણો. એક પછી એક ગણી જુઓ.'
+      });
+    }
     setTimeout(() => btn.classList.remove('wrong'), 600);
   }
 }
